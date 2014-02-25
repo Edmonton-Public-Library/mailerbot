@@ -25,8 +25,8 @@
 #      0.0 - Dev. 
 ####################################################
 # Change comment below for appropriate server.
-#SERVER=eplapp.library.ualberta.ca
-SERVER=edpl-t.library.ualberta.ca
+PRODUCTION_SERVER=eplapp.library.ualberta.ca
+TEST_SERVER=edpl-t.library.ualberta.ca
 USER=sirsi
 REMOTE=~/Unicorn/EPLwork/anisbet/
 LOCAL=~/projects/mailerbot/
@@ -34,10 +34,11 @@ APP=mailerbot.pl
 ARGS=-x
 
 put: test
-	scp ${LOCAL}${APP} ${USER}@${SERVER}:${REMOTE}
-	ssh ${USER}@${SERVER} '${REMOTE}${APP} ${ARGS}'
+	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
+	ssh ${USER}@${TEST_SERVER} '${REMOTE}${APP} ${ARGS}'
 get:
-	scp ${USER}@${SERVER}:${REMOTE}${APP} ${LOCAL}
+	scp ${USER}@${TEST_SERVER}:${REMOTE}${APP} ${LOCAL}
 test:
 	perl -c ${APP}
-
+production: test
+	scp ${LOCAL}${APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
