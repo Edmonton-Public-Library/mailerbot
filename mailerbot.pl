@@ -44,8 +44,8 @@ $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
 my $VERSION    = qq{0.1};
 my $WORKING_DIR= qq{.};
-my $MESSAGE_SUF= qq{.message};
-my $USER_SUF   = qq{.email};
+my $CUSTOMERS  = qq{};
+my $NOTICE     = qq{};
 my $SUBJECT    = qq{subject: };
 
 #
@@ -72,7 +72,9 @@ those it can not (because the user does not have an email address), and write
 those keys to 'fail' file, and change the name of the 'holds_no_purchase.key'
 to 'holds_no_purchase.sent'. Clobber file if is exists.
 
- -b: Email file list is barcodes not user the default user keys.
+ -n: Name of notice file whose contents will be sent to users.
+ -c: Name of customer file, customers (one per line) will be notified if possible.
+ -o: Name of the file that will contain the failed customers. Default stdout.
  -x: This (help) message.
 
 example: $0 -x
@@ -86,9 +88,32 @@ EOF
 # return: 
 sub init
 {
-    my $opt_string = 'x';
+    my $opt_string = 'c:n:o:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
+	$CUSTOMERS = $opt{'c'} if ( $opt{'c'} );
+	$NOTICE    = $opt{'n'} if ( $opt{'n'} );
+	if ( $CUSTOMERS eq "" ) 
+	{
+		print STDERR "**Error: customer file not mentioned.\n";
+		usage();
+	}
+	if ( -z $CUSTOMERS )
+	{
+		print STDERR "**Error: customer file empty.\n";
+		usage();
+	}
+	if ( $NOTICE eq "" )
+	{
+		print STDERR "**Error: notice file not mentioned.\n";
+		usage();
+	}
+	if ( -z $NOTICE )
+	{
+		print STDERR "**Error: notice file empty.\n";
+		usage();
+	}
+	print STDERR "All good \n";
 }
 
 # This function returns two strings, the first which may be empty is 
@@ -126,7 +151,10 @@ sub getMessage( $ )
 	return ($subject, $message);
 }
 
+
+
 init();
-my ($subject, $message) = getMessage( "./test.msg" );
+
+my ($subject, $message) = getMessage( "test/test.msg" );
 print "==$subject\n==$message\n";
 # EOF
