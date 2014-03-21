@@ -12,6 +12,40 @@ and prints those it can not to stdout.
 Instructions for Running:
 ./mailerbot.pl -c test/customer.lst -n test/notice.txt -e test/exclude.lst
 
+Notes on Notices:
+-----------------
+Notices follow these rules:
+1) if the notice is missing the script exists
+2) if the notice is empty the script exits.
+3) if the message body of a notice is empty the script exits.
+4) both footer and subject may be empty but a warning will be issued if the subject is empty.
+
+The basic format is...
+=== snip ===
+Hi there!
+footer: Signed EPL (we share)
+This is a test message.
+Here is another line.
+subject: HOLD Cancellation Notice.
+=== snip ===
+Note that the order of footer and subject doesn't matter. Also lines that start with '#' are considered comments
+and are ignored.
+
+Notes on Customer files
+-----------------------
+Example:
+21221012345678|message one|message two|
+21221020902471|message|
+21221011111111
+21221019003992|The big sleep  Tom Wild Date 2014-05-05 | Phil Collins P.Collins April 21, 2014|
+Allows additional fields which permits an arbitrary number of messages for any customer.
+The exclude list matches on the bar code portion only. Trailing pipes are optional.
+
+Notes on Customer exclude files
+-------------------------------
+21221011111111
+Currently doesn't allow additional fields. The pipe is also optional.
+
 Product Description:
 Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
 
