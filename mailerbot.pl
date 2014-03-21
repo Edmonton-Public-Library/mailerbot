@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/s/sirsi/Unicorn/Bin/perl -w
 #################################################### #!/s/sirsi/Unicorn/Bin/perl -w
 #
 # Perl source file for project mailerbot 
@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.2 - Fixed so it doesn't use ssh. 
 #          0.1 - Dev. 
 #
 ####################################################
@@ -42,7 +43,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.1};
+my $VERSION           = qq{0.2};
 my $WORKING_DIR       = qq{.};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
@@ -59,25 +60,16 @@ sub usage()
 
 	usage: $0 [-x]
 Usage notes for mailerbot.pl.
-Mailerbot is a project that emails customers messages. The script itself is 
-simple: run on schedule and on wake-up check the working directory for pairs 
-of files. Any file that ends in '.email' must have a list of user IDs (barcodes)
-one per line. The file can be named anything like 'holds_no_purchase.email'. 
-Mailerbot will then look for a matching file called 'holds_no_purchase.message' file
-and send that message to the users listed in the 'holds_no_purchase.email' file.
+Mailerbot is a project that emails customers messages.
 
-If the names do not match no message is sent. Use '#' for comments in both 
-message and user key file.
-
-Internally the script will check each user key and report those it can email and
-those it can not (because the user does not have an email address), and write 
-those keys to 'fail' file, and change the name of the 'holds_no_purchase.key'
-to 'holds_no_purchase.sent'. Clobber file if is exists.
+It will mail all the customers whose bar codes are listed with -c.
+It removes the customer bar codes found in -e (optional).
+It then searches for customer emails and mails those it has addresses for
+and prints those it can't to stdout.
 
  -c: Name of customer file, customers (one per line) will be notified if possible.
  -e: Name of exclude customer file list, customers (one per line) will NOT be notified.
  -n: Name of notice file whose contents will be sent to users.
- -o: Name of the file that will contain the failed customers. Default stdout.
  -x: This (help) message.
 
 example: $0 -x
@@ -240,7 +232,8 @@ sub getEmailableCustomers( $ )
 	while( my ($k, $messages) = each %$fullHash ) 
 	{
 		# echo 21221012345678 | seluser -iB -oX.9007.
-		my $result = `ssh sirsi\@eplapp.library.ualberta.ca 'echo $k | seluser -iB -oX.9007.' 2>/dev/null`;
+		# my $result = `ssh sirsi\@eplapp.library.ualberta.ca 'echo $k | seluser -iB -oX.9007.' 2>/dev/null`;
+		my $result = `echo $k | seluser -iB -oX.9007. 2>/dev/null`;
 		my @addrs = split '\|', $result;
 		if ( $addrs[0] ne "" )
 		{
@@ -290,21 +283,9 @@ init();
 
 # Find test and load subject and message.
 my ($subject, $message, $footer) = getMessage( $NOTICE );
-# print "Subject: $subject\nMessage reads: $message\n";
-
 # This step normalizes the list against the exclude list.
 my $idHash   = readMessageTable( $CUSTOMERS );
-# while( my ($k, $v) = each %$idHash ) 
-# {
-	# print STDERR "key: $k, value: $v.\n";
-# }
-
 my $idRmHash = readTable( $EXCLUDE_CUSTOMERS );
-# while( my ($k, $v) = each %$idRmHash ) 
-# {
-	# print STDERR "key: $k, value: $v.\n";
-# }
-
 removeExcludeCustomers( $idHash, $idRmHash );
 # This next step returns a hash of email->"message one|message two
 my $emailableCustomerHash = getEmailableCustomers( $idHash );

@@ -2,23 +2,15 @@
 
 Project Notes
 -------------
-Mailerbot is a project that emails customers messages. The script itself is 
-simple: run on schedule and on wake-up check the working directory for pairs 
-of files. Any file that ends in '.email' must have a list of user IDs (barcodes)
-one per line. The file can be named anything like 'holds_no_purchase.email'. 
-Mailerbot will then look for a matching file called 'holds_no_purchase.message' file
-and send that message to the users listed in the 'holds_no_purchase.email' file.
+Mailerbot is a project that emails customers messages.
 
-If the names do not match no message is sent. Use '#' for comments in both 
-message and user key file.
-
-Internally the script will check each user key and report those it can email and
-those it can not (because the user does not have an email address), and write 
-those keys to 'fail' file, and change the name of the 'holds_no_purchase.key'
-to 'holds_no_purchase.sent'. Clobber file if is exists.
+It will mail all the customers whose bar codes are listed with -c.
+It removes the customer bar codes found in -e (optional).
+It then searches for customer emails and mails those it has addresses for
+and prints those it can not to stdout.
 
 Instructions for Running:
-./mailerbot
+./mailerbot.pl -c test/customer.lst -n test/notice.txt -e test/exclude.lst
 
 Product Description:
 Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
