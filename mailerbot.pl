@@ -42,11 +42,13 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION    = qq{0.1};
-my $WORKING_DIR= qq{.};
-my $CUSTOMERS  = qq{};
-my $NOTICE     = qq{};
-my $SUBJECT    = qq{subject: };
+my $VERSION           = qq{0.1};
+my $WORKING_DIR       = qq{.};
+my $CUSTOMERS         = qq{};
+my $EXCLUDE_CUSTOMERS = qq{};
+my $NOTICE            = qq{};
+my $SUBJECT_SENTINAL  = qq{subject: };
+my $FOOTER_SENTINAL   = qq{footer: };
 
 #
 # Message about this program and how to use it.
@@ -72,8 +74,9 @@ those it can not (because the user does not have an email address), and write
 those keys to 'fail' file, and change the name of the 'holds_no_purchase.key'
 to 'holds_no_purchase.sent'. Clobber file if is exists.
 
- -n: Name of notice file whose contents will be sent to users.
  -c: Name of customer file, customers (one per line) will be notified if possible.
+ -e: Name of exclude customer file list, customers (one per line) will NOT be notified.
+ -n: Name of notice file whose contents will be sent to users.
  -o: Name of the file that will contain the failed customers. Default stdout.
  -x: This (help) message.
 
@@ -88,11 +91,12 @@ EOF
 # return: 
 sub init
 {
-    my $opt_string = 'c:n:o:x';
+    my $opt_string = 'c:e:n:o:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	$CUSTOMERS = $opt{'c'} if ( $opt{'c'} );
 	$NOTICE    = $opt{'n'} if ( $opt{'n'} );
+	$EXCLUDE_CUSTOMERS = $opt{'e'} if ( $opt{'e'} );
 	if ( $CUSTOMERS eq "" ) 
 	{
 		print STDERR "**Error: customer file not mentioned.\n";
@@ -113,7 +117,6 @@ sub init
 		print STDERR "**Error: notice file empty.\n";
 		usage();
 	}
-	print STDERR "All good \n";
 }
 
 # This function returns two strings, the first which may be empty is 
@@ -122,7 +125,7 @@ sub init
 # return: (subject, message) string tuple.
 sub getMessage( $ )
 {
-	my ($subject, $message) = "";
+	my ($subject, $message, $footer) = "";
 	my $fileRoot            = shift;
 	# open the the message file 
 	open MESSAGE, "<$fileRoot" or die "***Error, couldn't open message file, exiting before anything bad happens: $!\n";
@@ -131,30 +134,183 @@ sub getMessage( $ )
 		# Ignore lines that start with a comment.
 		next if (m/^#/);
 		# Grab the subject it starts with 'subject: '.
-		if (m/^($SUBJECT)/)
+		if (m/^($SUBJECT_SENTINAL)/)
 		{
 			my $s = $';
 			chomp($s);
 			$subject .= $s;
 			next;
 		}
+		if (m/^($FOOTER_SENTINAL)/)
+		{
+			my $s = $';
+			chomp($s);
+			$footer .= $s;
+			next;
+		}
 		# The rest of the file is message including blank lines.
 		$message .= $_;
 	}
 	close MESSAGE;
-	if (! defined $message or $message eq "")
+	# Test if we got a message and exit if none.
+	if ( $message eq "" )
 	{
 		# Stop the script if the message file was empty, I mean what's the point?
-		print STDERR "***Warning: now message to send found in $fileRoot. Exiting.\n";
+		print STDERR "***Error: no message to send found in $fileRoot. Exiting.\n";
 		exit 2;
 	}
-	return ($subject, $message);
+	# test if we have a subject but warn if none.
+	if ( $subject eq "" )
+	{
+		# Warn if the subject is empty.
+		print STDERR "***Warning: no subject to send found in $fileRoot.\n";
+	}
+	# Don't test for footer.
+	return ($subject, $message, $footer);
 }
 
+# Reads the contents of a file into a hash reference.
+# param:  file name string - path of file to write to.
+# return: hash reference - table data.
+sub readTable( $ )
+{
+	my ( $fileName ) = shift;
+	return {} if ( -z $fileName );
+	my ( $table )    = {};
+	if ( -e $fileName )
+	{
+		open TABLE, "<$fileName" or die "Serialization error reading '$fileName' $!\n";
+		while ( <TABLE> )
+		{
+			chomp;
+			$table->{ $_ } = 1;
+		}
+		close TABLE;
+	}
+	return $table;
+}
 
+# Reads the contents of a file into a hash reference with barcode->message|message|.
+# param:  file name string - path of file to write to.
+# return: hash reference - table data.
+sub readMessageTable( $ )
+{
+	my ( $fileName ) = shift;
+	my $table        = {};
+	return $table if ( -z $fileName );
+	if ( -e $fileName )
+	{
+		open TABLE, "<$fileName" or die "Serialization error reading '$fileName' $!\n";
+		while ( <TABLE> )
+		{
+			chomp;
+			my @fields = split( '\|' );
+			my $key = shift @fields;
+			$table->{ $key } = join '|', @fields;
+		}
+		close TABLE;
+	}
+	return $table;
+}
+
+# Removes bar codes from the mail list explicitly mentioned in exclude list.
+# param:  customer barcode hash.
+# param:  customers to be removed.
+# return: 
+sub removeExcludeCustomers( $$ )
+{
+	my ( $keepHash, $removeHash ) = @_;
+	for my $rmCustomer ( sort keys %$removeHash ) 
+	{
+        if ( defined $keepHash->{$rmCustomer} )
+		{
+			delete $keepHash->{$rmCustomer};
+			print STDERR "removing: $rmCustomer\n";
+		}
+    }
+}
+
+# Searches ILS for all email addresses for the barcodes in the argument hash.
+# param:  customer barcode message hash.
+# return: hash of emails to messages (if any).
+sub getEmailableCustomers( $ )
+{
+	my $fullHash  = shift;
+	my $emailHash = {};
+	while( my ($k, $messages) = each %$fullHash ) 
+	{
+		# echo 21221012345678 | seluser -iB -oX.9007.
+		my $result = `ssh sirsi\@eplapp.library.ualberta.ca 'echo $k | seluser -iB -oX.9007.' 2>/dev/null`;
+		my @addrs = split '\|', $result;
+		if ( $addrs[0] ne "" )
+		{
+			# Take the first address if many.
+			$emailHash->{$addrs[0]} = $messages;
+			# print STDERR "key: $addrs[0], value: $messages.\n";
+		}
+		else # No email address so print the bar code.
+		{
+			# TODO: Optionally print to file for -o
+			print "$k|$messages|\n";
+		}
+	}
+	return $emailHash;
+}
+
+#
+# Sends recipients messages via email.
+# param:  subject string
+# param:  recipents emails string
+# param:  message string
+# param:  hash of customer email addresses and optional messages string
+# return:
+#
+sub sendMail( $$$$ )
+{
+	my ($subject, $globalMessage, $footer, $customerHash) = @_;
+	while( my ($recipient, $messages) = each %$customerHash ) 
+	{
+		my $entireMessage = $globalMessage."\n";
+		open( MAILER, "| /usr/bin/mailx -s '$subject' $recipient" ) or die "Unable to email because: $!\n";
+		my @myMessages = split '\|', $messages;
+		foreach my $message ( @myMessages )
+		{
+			# Multiple white space causes script to output without new line (???)
+			$message =~ s/\s{2,}/ /g;
+			$entireMessage .= $message."\n" if ( $message ne "" );
+		}
+		$entireMessage .= "\n$footer\n" if ( $footer ne "" );
+		print MAILER $entireMessage;
+		close( MAILER );
+		$entireMessage = "";
+	}
+}
 
 init();
 
-my ($subject, $message) = getMessage( "test/test.msg" );
-print "==$subject\n==$message\n";
+# Find test and load subject and message.
+my ($subject, $message, $footer) = getMessage( $NOTICE );
+# print "Subject: $subject\nMessage reads: $message\n";
+
+# This step normalizes the list against the exclude list.
+my $idHash   = readMessageTable( $CUSTOMERS );
+# while( my ($k, $v) = each %$idHash ) 
+# {
+	# print STDERR "key: $k, value: $v.\n";
+# }
+
+my $idRmHash = readTable( $EXCLUDE_CUSTOMERS );
+# while( my ($k, $v) = each %$idRmHash ) 
+# {
+	# print STDERR "key: $k, value: $v.\n";
+# }
+
+removeExcludeCustomers( $idHash, $idRmHash );
+# This next step returns a hash of email->"message one|message two
+my $emailableCustomerHash = getEmailableCustomers( $idHash );
+# lastly, email users.
+sendMail( $subject, $message, $footer, $emailableCustomerHash );
+my $count = 0;
+$count += keys %$emailableCustomerHash;
+print STDERR "Total customers mailed: $count\n";
 # EOF
