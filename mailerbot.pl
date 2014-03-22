@@ -1,5 +1,5 @@
 #!/s/sirsi/Unicorn/Bin/perl -w
-#################################################### #!/s/sirsi/Unicorn/Bin/perl -w
+###########################################################################
 #
 # Perl source file for project mailerbot 
 # Purpose: Mail customers with specified message.
@@ -26,10 +26,11 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.3 - Fix so that messages can be included on exceptions lists too. 
 #          0.2 - Fixed so it doesn't use ssh. 
 #          0.1 - Dev. 
 #
-####################################################
+##############################################################################
 
 use strict;
 use warnings;
@@ -43,7 +44,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.2};
+my $VERSION           = qq{0.3};
 my $WORKING_DIR       = qq{.};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
@@ -161,27 +162,6 @@ sub getMessage( $ )
 	return ($subject, $message, $footer);
 }
 
-# Reads the contents of a file into a hash reference.
-# param:  file name string - path of file to write to.
-# return: hash reference - table data.
-sub readTable( $ )
-{
-	my ( $fileName ) = shift;
-	return {} if ( -z $fileName );
-	my ( $table )    = {};
-	if ( -e $fileName )
-	{
-		open TABLE, "<$fileName" or die "Serialization error reading '$fileName' $!\n";
-		while ( <TABLE> )
-		{
-			chomp;
-			$table->{ $_ } = 1;
-		}
-		close TABLE;
-	}
-	return $table;
-}
-
 # Reads the contents of a file into a hash reference with barcode->message|message|.
 # param:  file name string - path of file to write to.
 # return: hash reference - table data.
@@ -229,11 +209,24 @@ sub getEmailableCustomers( $ )
 {
 	my $fullHash  = shift;
 	my $emailHash = {};
-	while( my ($k, $messages) = each %$fullHash ) 
+	LINE: while( my ($k, $messages) = each %$fullHash ) 
 	{
 		# echo 21221012345678 | seluser -iB -oX.9007.
 		# my $result = `ssh sirsi\@eplapp.library.ualberta.ca 'echo $k | seluser -iB -oX.9007.' 2>/dev/null`;
-		my $result = `echo $k | seluser -iB -oX.9007. 2>/dev/null`;
+		my $result = "";
+		if ( $k =~ m/^\d{14}/ )
+		{
+			$result = `echo $k | seluser -iB -oX.9007. 2>/dev/null`;
+		}
+		elsif ( $k =~ m/^\d{3,7}/ ) # user key.
+		{
+			$result = `echo $k | seluser -iU -oX.9007. 2>/dev/null`;
+		}
+		else
+		{
+			print STDERR "**ignoring unrecognized user identifier '$k'\n";
+			next LINE;
+		}
 		my @addrs = split '\|', $result;
 		if ( $addrs[0] ne "" )
 		{
@@ -285,7 +278,7 @@ init();
 my ($subject, $message, $footer) = getMessage( $NOTICE );
 # This step normalizes the list against the exclude list.
 my $idHash   = readMessageTable( $CUSTOMERS );
-my $idRmHash = readTable( $EXCLUDE_CUSTOMERS );
+my $idRmHash = readMessageTable( $EXCLUDE_CUSTOMERS );
 removeExcludeCustomers( $idHash, $idRmHash );
 # This next step returns a hash of email->"message one|message two
 my $emailableCustomerHash = getEmailableCustomers( $idHash );

@@ -37,7 +37,7 @@ put: test
 	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
 	ssh ${USER}@${TEST_SERVER} '${REMOTE}${APP} ${ARGS}'
 	
-test:
+test_it:
 	perl -c ${APP}
-production: test
+production: test_it
 	scp ${LOCAL}${APP} ${USER}@${PRODUCTION_SERVER}:${REMOTE}
