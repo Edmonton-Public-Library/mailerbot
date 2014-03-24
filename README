@@ -1,7 +1,5 @@
 === Mon Feb 24 13:19:28 MST 2014 ===
 
-Project Notes
--------------
 Mailerbot is a project that emails customers messages.
 
 It will mail all the customers whose bar codes are listed with -c.
@@ -9,45 +7,56 @@ It removes the customer bar codes found in -e (optional).
 It then searches for customer emails and mails those it has addresses for
 and prints those it can not to stdout.
 
-Instructions for Running:
-./mailerbot.pl -c test/customer.lst -n test/notice.txt -e test/exclude.lst
 
-Notes on Notices:
------------------
+== Danger level ==
+This script can email all customers if you want so care should be taken to ensure that you have messaging right before mailing and your list is correct or customers will report spam. Also keep consistency. The script looks for pipe delimited input for all input files. If you use <code>user_keys</code> for customer IDs use them in all files. Failing to do so will result in the script not excluding customers because no matches will be found between <code>user_ids</code> and <code>user_keys</code>.
+
+== Usage ==
+This script can be run manually or run by [[cron]]
+
+== Flags ==
+ -c: Name of customer file, customers (one per line) will be notified if possible.
+ -e: Name of exclude customer file list, customers (one per line) will NOT be notified.
+ -n: Name of notice file whose contents will be sent to users.
+ -x: This (help) message.
+
+== Example ==
+
+ mailerbot.pl -c test/customer.lst -n test/notice.txt -e test/exclude.lst >test/unmailed_customers.lst
+
+== Input file examples ==
+=== Notes on Notices ===
 Notices follow these rules:
-1) if the notice is missing the script exists
-2) if the notice is empty the script exits.
-3) if the message body of a notice is empty the script exits.
-4) both footer and subject may be empty but a warning will be issued if the subject is empty.
+1 if the notice is missing the script exists
+2 if the notice is empty the script exits.
+3 if the message body of a notice is empty the script exits.
+4 both footer and subject may be empty but a warning will be issued if the subject is empty.
 
+In general customer files can use formatting like this:
+ subject: HOLD Cancellation Notice.
+ Greetings!
+ This is a message to let you know that the following holds have been cancelled.
+ # A comment can be put in the file like this. The line must start with a '#' or it will be sent too.
+ footer: Signed EPL (we share)
+but the <code>footer: </code> and <code>subject: </code> tags can appear in any line order but must appear at the beginning of a line.
 
-The basic format is...
-=== snip ===
-Hi there!
-footer: Signed EPL (we share)
-This is a test message.
-Here is another line.
-subject: HOLD Cancellation Notice.
-=== snip ===
-Note that the order of footer and subject doesn't matter. Also lines that start with '#' are considered comments
-and are ignored.
+=== Customer files ===
+The following is an example of a well formed customer file. All lines listed below are legal formats. Consecutive white space causes formatting errors and is so is removed during processing, and does not appear in out-going messages.
+ 21221012345678|message one|message two|
+ 21221020902471|message|
+ 21221011111111
+ 21221019003992|The big sleep  Tom Wild Date 2014-05-05 | Phil Collins P.Collins April 21, 2014|
 
-Notes on Customer files
------------------------
-Customer and customer exceptions files can use user keys as well so long as you are
-consistent for both files.
-Example:
-21221012345678|message one|message two|
-21221020902471|message|
-21221011111111
-21221019003992|The big sleep  Tom Wild Date 2014-05-05 | Phil Collins P.Collins April 21, 2014|
-Allows additional fields which permits an arbitrary number of messages for any customer.
-The exclude list matches on the bar code portion only. Trailing pipes are optional.
+=== Exclude files ===
+ are used to exclude customers from the mailing process. Customer IDs or user keys must appear one-per-line, but may include additional information after the first pipe, it will be ignored.
+ 21221011111111| data_1| data_2| ...| data_n |
 
-Notes on Customer exclude files
--------------------------------
-21221011111111
-Currently doesn't allow additional fields. The pipe is also optional.
+== Current status ==
+Version 0.3
+
+== Location ==
+ /s/sirsi/Unicorn/Bincustom
+
 
 Product Description:
 Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
