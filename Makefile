@@ -22,18 +22,19 @@
 #
 # Written by Andrew Nisbet at Edmonton Public Library
 # Rev: 
+#      0.1 - Modified target to point to Bincustom, added .PHONY. rule. 
 #      0.0 - Dev. 
 ####################################################
 # Change comment below for appropriate server.
 PRODUCTION_SERVER=eplapp.library.ualberta.ca
 TEST_SERVER=edpl-t.library.ualberta.ca
 USER=sirsi
-REMOTE=~/Unicorn/EPLwork/anisbet/
+REMOTE=~/Unicorn/Bincustom/
 LOCAL=~/projects/mailerbot/
 APP=mailerbot.pl
 ARGS=-x
-
-put: test
+.PHONY: test_it put production
+put: test_it
 	scp ${LOCAL}${APP} ${USER}@${TEST_SERVER}:${REMOTE}
 	ssh ${USER}@${TEST_SERVER} '${REMOTE}${APP} ${ARGS}'
 	

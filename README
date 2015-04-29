@@ -2,7 +2,7 @@
 
 Mailerbot is a project that emails customers messages.
 
-It will mail all the customers whose bar codes are listed with -c.
+It will mail all the customers whose bar codes are listed in the file denoted with -c.
 It removes the customer bar codes found in -e (optional).
 It then searches for customer emails and mails those it has addresses for
 and prints those it can not to stdout.
@@ -27,7 +27,7 @@ This script can be run manually or run by [[cron]]
 == Input file examples ==
 === Notes on Notices ===
 Notices follow these rules:
-1 if the notice is missing the script exists
+1 if the notice is missing the script exits.
 2 if the notice is empty the script exits.
 3 if the message body of a notice is empty the script exits.
 4 both footer and subject may be empty but a warning will be issued if the subject is empty.
@@ -41,14 +41,16 @@ In general customer files can use formatting like this:
 but the <code>footer: </code> and <code>subject: </code> tags can appear in any line order but must appear at the beginning of a line.
 
 === Customer files ===
-The following is an example of a well formed customer file. All lines listed below are legal formats. Consecutive white space causes formatting errors and is so is removed during processing, and does not appear in out-going messages.
+The following is an example of a well formed customer file. All lines listed below are legal formats. Consecutive white space causes
+formatting errors and is so is removed during processing, and does not appear in out-going messages.
  21221012345678|message one|message two|
  21221020902471|message|
  21221011111111
  21221019003992|The big sleep  Tom Wild Date 2014-05-05 | Phil Collins P.Collins April 21, 2014|
 
 === Exclude files ===
- are used to exclude customers from the mailing process. Customer IDs or user keys must appear one-per-line, but may include additional information after the first pipe, it will be ignored.
+are used to exclude customers from the mailing process. Customer IDs or user keys must appear one-per-line, but may 
+include additional information after the first pipe, it will be ignored.
  21221011111111| data_1| data_2| ...| data_n |
 
 == Current status ==
