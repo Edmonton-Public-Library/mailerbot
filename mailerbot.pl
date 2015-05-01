@@ -62,7 +62,7 @@ sub usage()
 
 	usage: $0 [-x]
 Usage notes for mailerbot.pl.
-Mailerbot is a project that emails customers messages.
+Mailerbot is a perl script that emails customers customisable messages.
 
 It will mail all the customers whose bar codes are listed in the input file -c.
 It removes the customer bar codes found in -e (optional). The -e file is a 
@@ -94,7 +94,6 @@ The output message in the above examples would look like
 
     Signed, your friends at EPL.
 --snip--
-
 
  -c: Name of customer file, customers (one per line) will be notified if possible.
  -e: Name of exclude customer file list, customers (one per line) will NOT be notified.

@@ -1,11 +1,37 @@
 === Mon Feb 24 13:19:28 MST 2014 ===
 
-Mailerbot is a project that emails customers messages.
+Mailerbot is a perl script that emails customers customisable messages.
 
-It will mail all the customers whose bar codes are listed in the file denoted with -c.
-It removes the customer bar codes found in -e (optional).
-It then searches for customer emails and mails those it has addresses for
-and prints those it can not to stdout.
+It will mail all the customers whose bar codes are listed in the input file -c.
+It removes the customer bar codes found in -e (optional). The -e file is a 
+black list, user IDs (or user keys) for customers that you don't want it to mail. 
+This is useful if you want to set up a regular email job, but don't want customers
+to be spammed each time it runs. Once the mailerbot is done, append the IDs 
+from the -c list to the file that is the input for -e.
+
+Mailerbot searches for customer emails and mails those it has addresses for
+and prints those it can't to stdout.
+
+Mailerbot can send custom messages to customers. Each line of the message must
+appear between '|' characters in the -c file like so:
+21221012345678|On April 30 you borrowed 'Room with a view'.|We found the case and not the disk.|
+
+You can set a subject line for the mail you are sending by starting a line anywhere in the file
+with 'subject:' like so:
+subject: Missing items
+
+You can also add a footer as a signature i.e.:
+footer: Signed, your friends at EPL.
+
+The output message in the above examples would look like
+--snip--
+    Subject: Missing items
+
+    On April 30 you borrowed 'Room with a view'.
+    We found the case and not the disk.
+
+    Signed, your friends at EPL.
+--snip--
 
 
 == Danger level ==
@@ -22,9 +48,32 @@ This script can be run manually or run by [[cron]]
 
 == Example ==
 
- mailerbot.pl -c test/customer.lst -n test/notice.txt -e test/exclude.lst >test/unmailed_customers.lst
+ mailerbot.pl -c customer.lst -n notice.txt -e exclude.lst >unmailed_customers.lst
 
 == Input file examples ==
+head customer.lst
+21221012345678|Can you check if still have the disk for 'Room with a view'|
+21221011111111|Did you forget to return 'Ironman II'?|
+21221011111112|Did you forget to return 'Senna'?|
+21221011111113|Did you forget to return 'The Mummy Returns'?|
+116455|Did you forget to return 'Batman'?|
+
+head notice.txt
+subject:Missing items
+Just a friendly reminder. We notice that you returned an item today but part of it was missing.
+footer:Your friends at EPL!
+
+head exlcude.lst
+21221000000007
+21221000000006
+1237
+
+head unmailed_customers.lst
+21221000000007||
+21221000000006||
+1237||
+21221011111113|| 
+
 === Notes on Notices ===
 Notices follow these rules:
 1 if the notice is missing the script exits.
