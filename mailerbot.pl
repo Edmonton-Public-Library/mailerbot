@@ -1,4 +1,4 @@
-#!/s/sirsi/Unicorn/Bin/perl -w
+#!/usr/bin/perl -w
 ###########################################################################
 #
 # Perl source file for project mailerbot 
@@ -6,7 +6,7 @@
 # Method: API.
 #
 # Mails customers based on input file and matching message file.
-#    Copyright (C) 2013  Andrew Nisbet
+#    Copyright (C) 2014  Andrew Nisbet
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.3.01 - Fixed documentation. 
 #          0.3 - Fix so that messages can be included on exceptions lists too. 
 #          0.2 - Fixed so it doesn't use ssh. 
 #          0.1 - Dev. 
@@ -44,7 +45,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.3};
+my $VERSION           = qq{0.3.01};
 my $WORKING_DIR       = qq{.};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
@@ -63,10 +64,37 @@ sub usage()
 Usage notes for mailerbot.pl.
 Mailerbot is a project that emails customers messages.
 
-It will mail all the customers whose bar codes are listed with -c.
-It removes the customer bar codes found in -e (optional).
-It then searches for customer emails and mails those it has addresses for
+It will mail all the customers whose bar codes are listed in the input file -c.
+It removes the customer bar codes found in -e (optional). The -e file is a 
+black list, user IDs (or user keys) for customers that you don't want it to mail. 
+This is useful if you want to set up a regular email job, but don't want customers
+to be spammed each time it runs. Once the mailerbot is done, append the IDs 
+from the -c list to the file that is the input for -e.
+
+Mailerbot searches for customer emails and mails those it has addresses for
 and prints those it can't to stdout.
+
+Mailerbot can send custom messages to customers. Each line of the message must
+appear between '|' characters in the -c file like so:
+21221012345678|On April 30 you borrowed 'Room with a view'.|We found the case and not the disk.|
+
+You can set a subject line for the mail you are sending by starting a line anywhere in the file
+with 'subject:' like so:
+subject: Missing items
+
+You can also add a footer as a signature i.e.:
+footer: Signed, your friends at EPL.
+
+The output message in the above examples would look like
+--snip--
+    Subject: Missing items
+
+    On April 30 you borrowed 'Room with a view'.
+    We found the case and not the disk.
+
+    Signed, your friends at EPL.
+--snip--
+
 
  -c: Name of customer file, customers (one per line) will be notified if possible.
  -e: Name of exclude customer file list, customers (one per line) will NOT be notified.
