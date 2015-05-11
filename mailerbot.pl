@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.3.02 - Fixed warnings about empty footers. 
 #          0.3.01 - Fixed documentation. 
 #          0.3 - Fix so that messages can be included on exceptions lists too. 
 #          0.2 - Fixed so it doesn't use ssh. 
@@ -45,7 +46,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.3.01};
+my $VERSION           = qq{0.3.02};
 my $WORKING_DIR       = qq{.};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
@@ -255,7 +256,7 @@ sub getEmailableCustomers( $ )
 			next LINE;
 		}
 		my @addrs = split '\|', $result;
-		if ( $addrs[0] ne "" )
+		if ( defined $addrs[0] and $addrs[0] )
 		{
 			# Take the first address if many.
 			$emailHash->{$addrs[0]} = $messages;
@@ -292,7 +293,7 @@ sub sendMail( $$$$ )
 			$message =~ s/\s{2,}/ /g;
 			$entireMessage .= $message."\n" if ( $message ne "" );
 		}
-		$entireMessage .= "\n$footer\n" if ( $footer ne "" );
+		$entireMessage .= "\n$footer\n" if ( defined $footer and $footer );
 		print MAILER $entireMessage;
 		close( MAILER );
 		$entireMessage = "";
