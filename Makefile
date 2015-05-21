@@ -2,7 +2,7 @@
 # Makefile for project mailerbot 
 # Created: Mon Feb 24 13:19:28 MST 2014
 #
-#<one line to give the program's name and a brief idea of what it does.>
+# Distributes script to appropriate directories depending on server.
 #    Copyright (C) 2013  Andrew Nisbet
 #
 # This program is free software; you can redistribute it and/or modify

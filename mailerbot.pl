@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.3.03 - Fixed test for empty message concatenation warning. 
 #          0.3.02 - Fixed warnings about empty footers. 
 #          0.3.01 - Fixed documentation. 
 #          0.3 - Fix so that messages can be included on exceptions lists too. 
@@ -46,7 +47,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.3.02};
+my $VERSION           = qq{0.3.03};
 my $WORKING_DIR       = qq{.};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
@@ -291,7 +292,7 @@ sub sendMail( $$$$ )
 		{
 			# Multiple white space causes script to output without new line (???)
 			$message =~ s/\s{2,}/ /g;
-			$entireMessage .= $message."\n" if ( $message ne "" );
+			$entireMessage .= $message."\n" if ( $message );
 		}
 		$entireMessage .= "\n$footer\n" if ( defined $footer and $footer );
 		print MAILER $entireMessage;
