@@ -26,6 +26,8 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.3.05 - Fix mail not being sent to valid customer. 
+#          0.3.04 - Removed 'o' from input opts. 
 #          0.3.03 - Fixed test for empty message concatenation warning. 
 #          0.3.02 - Fixed warnings about empty footers. 
 #          0.3.01 - Fixed documentation. 
@@ -47,8 +49,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.3.03};
-my $WORKING_DIR       = qq{.};
+my $VERSION           = qq{0.3.04};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
 my $NOTICE            = qq{};
@@ -97,6 +98,7 @@ The output message in the above examples would look like
     Signed, your friends at EPL.
 --snip--
 
+ -D: Set debug flag; all messages sent to STDERR.
  -c: Name of customer file, customers (one per line) will be notified if possible.
  -e: Name of exclude customer file list, customers (one per line) will NOT be notified.
  -n: Name of notice file whose contents will be sent to users.
@@ -113,7 +115,7 @@ EOF
 # return: 
 sub init
 {
-    my $opt_string = 'c:e:n:o:x';
+    my $opt_string = 'c:De:n:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	$CUSTOMERS = $opt{'c'} if ( $opt{'c'} );
@@ -148,7 +150,7 @@ sub init
 sub getMessage( $ )
 {
 	my ($subject, $message, $footer) = "";
-	my $fileRoot            = shift;
+	my $fileRoot                     = shift;
 	# open the the message file 
 	open MESSAGE, "<$fileRoot" or die "***Error, couldn't open message file, exiting before anything bad happens: $!\n";
 	while (<MESSAGE>)
@@ -198,19 +200,22 @@ sub readMessageTable( $ )
 {
 	my ( $fileName ) = shift;
 	my $table        = {};
-	return $table if ( -z $fileName );
-	if ( -e $fileName )
+	if ( ! -e $fileName )
 	{
-		open TABLE, "<$fileName" or die "Serialization error reading '$fileName' $!\n";
-		while ( <TABLE> )
-		{
-			chomp;
-			my @fields = split( '\|' );
-			my $key = shift @fields;
-			$table->{ $key } = join '|', @fields;
-		}
-		close TABLE;
+		printf STDERR "'%s' not found or is empty\n", $fileName;
+		return $table;
 	}
+	open TABLE, "<$fileName" or die "Serialization error reading '$fileName' $!\n";
+	while ( <TABLE> )
+	{
+		chomp;
+		my @fields = split( '\|' );
+		print STDERR "* DEBUG: fields '".@fields."' empty\n" if ( $opt{'D'} );
+		my $key = shift @fields;
+		$table->{ $key } = join '|', @fields;
+		printf STDERR "* DEBUG: '%s'->{'%s'}='%s'\n", $table, $key, $table->{ $key } if ( $opt{'D'} );
+	}
+	close TABLE;
 	return $table;
 }
 
@@ -226,7 +231,7 @@ sub removeExcludeCustomers( $$ )
         if ( defined $keepHash->{$rmCustomer} )
 		{
 			delete $keepHash->{$rmCustomer};
-			print STDERR "removing: $rmCustomer\n";
+			printf STDERR "removing: '%14s'\n", $rmCustomer if ( $opt{'D'} );
 		}
     }
 }
@@ -305,12 +310,18 @@ init();
 
 # Find test and load subject and message.
 my ($subject, $message, $footer) = getMessage( $NOTICE );
+printf STDERR "* DEBUG: NOTICE file '%s':\n subject:'%s'\n message:'%s'\n footer:'%s'\n", $NOTICE, $subject, $message, $footer if ( $opt{'D'} );
 # This step normalizes the list against the exclude list.
+printf STDERR "* DEBUG: customer file: '%s'\n", $CUSTOMERS if ( $opt{'D'} );
+printf STDERR "* DEBUG: exclude customer file: '%s'\n", $EXCLUDE_CUSTOMERS if ( $opt{'D'} and $opt{'e'} );
 my $idHash   = readMessageTable( $CUSTOMERS );
+print STDERR "* DEBUG: read users and messages " . keys( %$idHash ) . "\n" if ( $opt{'D'} );
 my $idRmHash = readMessageTable( $EXCLUDE_CUSTOMERS );
-removeExcludeCustomers( $idHash, $idRmHash );
+print STDERR "* DEBUG: read users and messages " . keys( %$idRmHash ) . "\n" if ( $opt{'D'} );
+removeExcludeCustomers( $idHash, $idRmHash ) if ( scalar( keys ( %$idRmHash ) ) > 0 );
 # This next step returns a hash of email->"message one|message two
 my $emailableCustomerHash = getEmailableCustomers( $idHash );
+print STDERR "* DEBUG: final list size: " . keys( %$emailableCustomerHash ) . "\n" if ( $opt{'D'} );
 # lastly, email users.
 sendMail( $subject, $message, $footer, $emailableCustomerHash );
 my $count = 0;
