@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.3.06 - Allow for bar codes to be from 10 - 14 digits. 
 #          0.3.05 - Fix mail not being sent to valid customer. 
 #          0.3.04 - Removed 'o' from input opts. 
 #          0.3.03 - Fixed test for empty message concatenation warning. 
@@ -49,7 +50,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.3.04};
+my $VERSION           = qq{0.3.06};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
 my $NOTICE            = qq{};
@@ -248,7 +249,7 @@ sub getEmailableCustomers( $ )
 		# echo 21221012345678 | seluser -iB -oX.9007.
 		# my $result = `ssh sirsi\@eplapp.library.ualberta.ca 'echo $k | seluser -iB -oX.9007.' 2>/dev/null`;
 		my $result = "";
-		if ( $k =~ m/^\d{14}/ )
+		if ( $k =~ m/^\d{10,14}/ ) # Allow for 13 and smaller digit bar codes.
 		{
 			$result = `echo $k | seluser -iB -oX.9007. 2>/dev/null`;
 		}
