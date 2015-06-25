@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.3.07 - Suppress error message if the exclude file is not found. 
 #          0.3.06 - Allow for bar codes to be from 10 - 14 digits. 
 #          0.3.05 - Fix mail not being sent to valid customer. 
 #          0.3.04 - Removed 'o' from input opts. 
@@ -50,7 +51,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.3.06};
+my $VERSION           = qq{0.3.07};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
 my $NOTICE            = qq{};
@@ -195,15 +196,17 @@ sub getMessage( $ )
 }
 
 # Reads the contents of a file into a hash reference with barcode->message|message|.
-# param:  file name string - path of file to write to.
+# param:  file name string - path to the customers to mail, or exclude from mailing file.
+# param:  0 to not warn of missing or empty file, ie: exclude customer files, and 1 otherwise.
 # return: hash reference - table data.
-sub readMessageTable( $ )
+sub readMessageTable( $$ )
 {
 	my ( $fileName ) = shift;
+	my $warnMe       = shift; 
 	my $table        = {};
 	if ( ! -e $fileName )
 	{
-		printf STDERR "'%s' not found or is empty\n", $fileName;
+		printf STDERR "'%s' not found or is empty\n", $fileName if ( $warnMe );
 		return $table;
 	}
 	open TABLE, "<$fileName" or die "Serialization error reading '$fileName' $!\n";
@@ -315,9 +318,9 @@ printf STDERR "* DEBUG: NOTICE file '%s':\n subject:'%s'\n message:'%s'\n footer
 # This step normalizes the list against the exclude list.
 printf STDERR "* DEBUG: customer file: '%s'\n", $CUSTOMERS if ( $opt{'D'} );
 printf STDERR "* DEBUG: exclude customer file: '%s'\n", $EXCLUDE_CUSTOMERS if ( $opt{'D'} and $opt{'e'} );
-my $idHash   = readMessageTable( $CUSTOMERS );
+my $idHash   = readMessageTable( $CUSTOMERS, 1 );
 print STDERR "* DEBUG: read users and messages " . keys( %$idHash ) . "\n" if ( $opt{'D'} );
-my $idRmHash = readMessageTable( $EXCLUDE_CUSTOMERS );
+my $idRmHash = readMessageTable( $EXCLUDE_CUSTOMERS, 0 );
 print STDERR "* DEBUG: read users and messages " . keys( %$idRmHash ) . "\n" if ( $opt{'D'} );
 removeExcludeCustomers( $idHash, $idRmHash ) if ( scalar( keys ( %$idRmHash ) ) > 0 );
 # This next step returns a hash of email->"message one|message two
