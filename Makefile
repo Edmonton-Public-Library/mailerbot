@@ -30,6 +30,7 @@ PRODUCTION_SERVER=eplapp.library.ualberta.ca
 TEST_SERVER=edpl-t.library.ualberta.ca
 USER=sirsi
 REMOTE=~/Unicorn/Bincustom/
+# REMOTE=/s/sirsi/Unicorn/EPLwork/anisbet/EPL4Life/EmailTemplate/
 LOCAL=~/projects/mailerbot/
 APP=mailerbot.pl
 ARGS=-x

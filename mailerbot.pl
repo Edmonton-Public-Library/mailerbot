@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.4_U_01 - Improve usage and comments, add html handling. 
 #          0.3.07 - Suppress error message if the exclude file is not found. 
 #          0.3.06 - Allow for bar codes to be from 10 - 14 digits. 
 #          0.3.05 - Fix mail not being sent to valid customer. 
@@ -51,7 +52,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.3.07};
+my $VERSION           = qq{0.4_U_01};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
 my $NOTICE            = qq{};
@@ -65,7 +66,7 @@ sub usage()
 {
     print STDERR << "EOF";
 
-	usage: $0 [-x]
+	usage: $0 [-hx] [-c'customer.lst' -n'notice.txt'] [-e'exclude_customer.lst]
 Usage notes for mailerbot.pl.
 Mailerbot is a perl script that emails customers customisable messages.
 
@@ -92,7 +93,7 @@ footer: Signed, your friends at EPL.
 
 The output message in the above examples would look like
 --snip--
-    Subject: Missing items
+    subject: Missing items
 
     On April 30 you borrowed 'Room with a view'.
     We found the case and not the disk.
@@ -103,10 +104,11 @@ The output message in the above examples would look like
  -D: Set debug flag; all messages sent to STDERR.
  -c: Name of customer file, customers (one per line) will be notified if possible.
  -e: Name of exclude customer file list, customers (one per line) will NOT be notified.
+ -h: Send message as HTML.
  -n: Name of notice file whose contents will be sent to users.
  -x: This (help) message.
 
-example: $0 -x
+example: $0 -c'customers.lst' -n'notice.txt' -e'do_not_mail.lst' -D
 Version: $VERSION
 EOF
     exit;
@@ -117,7 +119,7 @@ EOF
 # return: 
 sub init
 {
-    my $opt_string = 'c:De:n:x';
+    my $opt_string = 'c:De:hn:x';
     getopts( "$opt_string", \%opt ) or usage();
     usage() if ( $opt{'x'} );
 	$CUSTOMERS = $opt{'c'} if ( $opt{'c'} );
@@ -158,20 +160,20 @@ sub getMessage( $ )
 	while (<MESSAGE>)
 	{
 		# Ignore lines that start with a comment.
-		next if (m/^#/);
+		next if ( m/^#/ );
 		# Grab the subject it starts with 'subject: '.
-		if (m/^($SUBJECT_SENTINAL)/)
+		if ( m/^subject:\s+/ )
 		{
 			my $s = $';
-			chomp($s);
-			$subject .= $s;
+			chomp $s;
+			$subject = $s;
 			next;
 		}
-		if (m/^($FOOTER_SENTINAL)/)
+		if ( m/^footer:\s+/ )
 		{
 			my $s = $';
 			chomp($s);
-			$footer .= $s;
+			$footer = $s;
 			next;
 		}
 		# The rest of the file is message including blank lines.
@@ -179,14 +181,14 @@ sub getMessage( $ )
 	}
 	close MESSAGE;
 	# Test if we got a message and exit if none.
-	if ( $message eq "" )
+	if ( ! $message )
 	{
 		# Stop the script if the message file was empty, I mean what's the point?
 		print STDERR "***Error: no message to send found in $fileRoot. Exiting.\n";
 		exit 2;
 	}
 	# test if we have a subject but warn if none.
-	if ( $subject eq "" )
+	if ( ! $subject )
 	{
 		# Warn if the subject is empty.
 		print STDERR "***Warning: no subject to send found in $fileRoot.\n";
@@ -310,6 +312,40 @@ sub sendMail( $$$$ )
 	}
 }
 
+#
+# Sends recipients HTML messages via email.
+# param:  subject string
+# param:  recipents emails string
+# param:  message string
+# param:  hash of customer email addresses and optional messages string
+# return:
+#
+sub sendHTMLMail( $$$$ )
+{
+	my ($subject, $globalMessage, $footer, $customerHash) = @_;
+	while( my ($recipient, $messages) = each %$customerHash ) 
+	{
+		my $entireMessage = $globalMessage."\n";
+		open( MAILER, " | /usr/sbin/sendmail -t" ) or die "Unable to email because: $!\n";
+		my @myMessages = split '\|', $messages;
+		foreach my $message ( @myMessages )
+		{
+			# Multiple white space causes script to output without new line (???)
+			$message =~ s/\s{2,}/ /g;
+			$entireMessage .= $message."\n" if ( $message );
+		}
+		$entireMessage .= "\n$footer\n" if ( defined $footer and $footer );
+		print MAILER << "EOF";
+To: $recipient
+Subject: $subject
+Content-type: text/html
+
+$entireMessage
+EOF
+		close MAILER;
+	}
+}
+
 init();
 
 # Find test and load subject and message.
@@ -327,7 +363,14 @@ removeExcludeCustomers( $idHash, $idRmHash ) if ( scalar( keys ( %$idRmHash ) ) 
 my $emailableCustomerHash = getEmailableCustomers( $idHash );
 print STDERR "* DEBUG: final list size: " . keys( %$emailableCustomerHash ) . "\n" if ( $opt{'D'} );
 # lastly, email users.
-sendMail( $subject, $message, $footer, $emailableCustomerHash );
+if ( $opt{'h'} )
+{
+	sendHTMLMail( $subject, $message, $footer, $emailableCustomerHash );
+}
+else
+{
+	sendMail( $subject, $message, $footer, $emailableCustomerHash );
+}
 my $count = 0;
 $count += keys %$emailableCustomerHash;
 print STDERR "Total customers mailed: $count\n";
