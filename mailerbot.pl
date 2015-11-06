@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.4_U_02 - Improve output for gmail. 
 #          0.4_U_01 - Improve usage and comments, add html handling. 
 #          0.3.07 - Suppress error message if the exclude file is not found. 
 #          0.3.06 - Allow for bar codes to be from 10 - 14 digits. 
@@ -52,7 +53,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.4_U_01};
+my $VERSION           = qq{0.4_U_02};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
 my $NOTICE            = qq{};
@@ -335,6 +336,14 @@ sub sendHTMLMail( $$$$ )
 			$entireMessage .= $message."\n" if ( $message );
 		}
 		$entireMessage .= "\n$footer\n" if ( defined $footer and $footer );
+		# my $headers = "To: $recipient\n";
+		# $headers .= "Subject: $subject\n";
+		# $headers .= "MIME-Version: 1.0\n";
+		# $headers .= "Content-type: text/html\n\n";
+		# $headers .= "$entireMessage\n";
+		# print MAILER << "EOF";
+# $headers
+# EOF
 		print MAILER << "EOF";
 To: $recipient
 Subject: $subject
