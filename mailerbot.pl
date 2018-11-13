@@ -26,6 +26,7 @@
 # Author:  Andrew Nisbet, Edmonton Public Library
 # Created: Mon Feb 24 13:19:28 MST 2014
 # Rev: 
+#          0.4_U_03 - Mail for Red Hat's version of mailx. 
 #          0.4_U_02 - Improve output for gmail. 
 #          0.4_U_01 - Improve usage and comments, add html handling. 
 #          0.3.07 - Suppress error message if the exclude file is not found. 
@@ -53,7 +54,7 @@ use Getopt::Std;
 $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
 $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
 ###############################################
-my $VERSION           = qq{0.4_U_02};
+my $VERSION           = qq{0.4_U_03};
 my $CUSTOMERS         = qq{};
 my $EXCLUDE_CUSTOMERS = qq{};
 my $NOTICE            = qq{};
@@ -298,7 +299,6 @@ sub sendMail( $$$$ )
 	while( my ($recipient, $messages) = each %$customerHash ) 
 	{
 		my $entireMessage = $globalMessage."\n";
-		open( MAILER, "| /usr/bin/mailx -s '$subject' $recipient" ) or die "Unable to email because: $!\n";
 		my @myMessages = split '\|', $messages;
 		foreach my $message ( @myMessages )
 		{
@@ -307,8 +307,7 @@ sub sendMail( $$$$ )
 			$entireMessage .= $message."\n" if ( $message );
 		}
 		$entireMessage .= "\n$footer\n" if ( defined $footer and $footer );
-		print MAILER $entireMessage;
-		close( MAILER );
+        `echo "$entireMessage" | /usr/bin/mailx -s '$subject' $recipient`;
 		$entireMessage = "";
 	}
 }
