@@ -60,8 +60,8 @@ use Getopt::Std;
 # without assuming any environment settings and we need to use sirsi's.
 ###############################################
 # *** Edit these to suit your environment *** #
-# $ENV{'PATH'}  = qq{:/s/sirsi/Unicorn/Bincustom:/s/sirsi/Unicorn/Bin:/usr/bin:/usr/sbin};
-# $ENV{'UPATH'} = qq{/s/sirsi/Unicorn/Config/upath};
+# $ENV{'PATH'}  = qq{:/software/EDPL/Unicorn/Bincustom:/software/EDPL/Unicorn/Bin:/usr/bin:/usr/sbin};
+# $ENV{'UPATH'} = qq{/software/EDPL/Unicorn/Config/upath};
 ###############################################
 my $VERSION           = qq{0.4_U_03};
 my $CUSTOMERS         = qq{};
@@ -263,7 +263,7 @@ sub getEmailableCustomers( $ )
 	LINE: while( my ($k, $messages) = each %$fullHash ) 
 	{
 		# echo 21221012345678 | seluser -iB -oX.9007.
-		# my $result = `ssh sirsi\@eplapp.library.ualberta.ca 'echo $k | seluser -iB -oX.9007.' 2>/dev/null`;
+		# my $result = `ssh sirsi\@edpl.sirsidynix.net 'echo $k | seluser -iB -oX.9007.' 2>/dev/null`;
 		my $result = "";
 		if ( $k =~ m/^\d{10,14}/ ) # Allow for 13 and smaller digit bar codes.
 		{
