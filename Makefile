@@ -35,7 +35,7 @@ BIN_CUSTOM=~/Unicorn/Bincustom
 LOCAL=~/projects/mailerbot
 APP=mailerbot.pl
 HTML_APP=mailerbothtml.sh
-AVI_DIR=/software/EDPL/Unicorn/EPLwork/Mailerbot/AVIncomplete
+AVI_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot/AVIncomplete
 ON_ORDER_CANCEL_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Notifycancelholds
 ARGS=-x
 .PHONY: test_it put production html
