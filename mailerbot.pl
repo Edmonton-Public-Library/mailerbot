@@ -208,6 +208,10 @@ sub getMessage( $ )
 	return ($subject, $message, $footer);
 }
 
+# ==> incomplete_item_customers.lst <==
+# 21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
+# ==> complete_item_customers.lst <==
+# 21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
 # Reads the contents of a file into a hash reference with barcode->message|message|.
 # param:  file name string - path to the customers to mail, or exclude from mailing file.
 # param:  0 to not warn of missing or empty file, ie: exclude customer files, and 1 otherwise.

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>EPL Will be Unable to Fulfill Your Hold</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style type="text/css">
+	p {
+		margin-top: 0;
+	}
+	li {
+		margin-top: .25rem;
+		margin-bottom: .25rem;
+	}
+	/*dark mode*/
+	@media (prefers-color-scheme: dark) {
+		body {
+			background-color:black;
+			color:#EEEEEE;
+		}
+
+		a, a:visited {
+			color:#009DDC;
+		}
+
+		#noticeDate {
+			color:#888888 !important;
+		}
+		strong {
+			color:white;
+		}
+	}
+
+	/*large screen*/
+	@media screen and (min-width: 900px){
+		td.footer br.line1 {display: none;}
+		td.tabs br.tabbreak	{display: none;}
+	}
+
+	/*medium screen. no min-width set--any rules assigned here will also be triggered in small screen*/
+	@media only screen and (max-width: 900px) {
+		.logo source, .logo img {width:100% !important;}
+		table.container {max-width: 80% !important;}
+		td.noticetitle {padding: 0px 0px 5px 0px !important;}
+		td.noticetitle h1 {font-size: 24px !important;}
+		td.content table.button {width: auto;}
+		td.content table.button td a {font-size: 14px !important;}
+	}
+
+	/*small screen*/
+	@media only screen and (max-width: 600px) {
+		table.container {border: 8px solid #1B3770 !important; margin: 0px 0px !important; max-width: 100% !important;}
+		td.date {font-size: 14px !important;}
+		td.footer {padding: 20px 30px !important;}
+	}
+
+</style>
+</head>
+
+<body style="font-family: Helvetica Neue, Helvetica, Arial, sans-serif;margin:0px;padding:0px;">
+
+<!-- content -->
+<table class="container" style="border:10px solid #004B8D; padding:20px; max-width:65%; margin:20px auto;">
+	<tr>
+		<td align="center" style="margin:0;padding:0;text-align:center;"><a href="https://epl.ca/"><picture><source srcset="https://www2.epl.ca/images/logo-dark_xl.png" media="(prefers-color-scheme: dark)"><img width="400" style="width:400px;max-width:400px;" src="https://www2.epl.ca/images/logo_xl.png" alt="Edmonton Public Library" border="0"></picture></a>
+		</td>
+	</tr>
+	<tr align="right">
+		<td class="date">
+			<p id="noticeDate" style="letter-spacing:0.075em; text-align:left; color:#004B8D; font-weight:bold;">[[noticeDate]]</p>
+		</td>
+	</tr>
+	<tr>
+		<td class="noticetitle" style="margin:0px 0px 0px 0px; padding-top: 16px;">
+			<h1 style="margin: 0px 0px 0px 0px;">EPL Will be Unable to Fulfill Your Hold</h1>
+		</td>
+	</tr>
+<!-- intro text -->
+	<tr>
+		<td class="intro">
+			<div style="border-left: 3px solid #FDBB30; padding: 2px; padding-left:16px;">
+				
+  Hi [[firstName]],<br><br>
+  <div>We are sorry to inform you that EPL will be unable to fulfill your hold.</div>
+  <div>
+    If your hold was for a title that has already been released, we may no longer have any copies available for borrowing. Please check our catalogue to determine if the title is available in another format. You may also <a href="http://www.epl.ca/contactepl">contact us</a> for assistance locating a similar title.
+Please see branch staff for assistance.
+  </div>
+			</div>
+		</td>
+	</tr>
+
+<!-- REPEAT BLOCK STARTS -->
+	<tr>
+		<td class="billBlock" style="padding: 15px 30px 15px 30px; line-height: 1.5em;">
+			<strong style="font-size:1.2em">[[title]]</strong>
+		</td>
+	</tr>
+<!-- REPEAT BLOCK ENDS -->
+
+	<tr>
+		<td class="closing">
+			
+				<div style="border-left: 3px solid #FDBB30; padding: 2px; padding-left:16px; margin:16px 0">
+					<div>If you have any questions about this item, or any other aspect of your account, please contact your local branch.</div>			
+				</div>
+			
+			<p>
+				Thank you,<br>Edmonton Public Library 
+			</p>
+		</td>
+	</tr>
+</table>	
+<!-- end content -->
+
+<!-- footer -->
+<table style="width: 100%;">
+	<tr>
+		<td class="footer" align="center" style="font-size: 16px; margin: 20px auto;">
+			<strong>PLEASE DO NOT REPLY TO THIS EMAIL AS IT DOES NOT ACCEPT MESSAGES.</strong>
+		</td>
+	</tr>
+</table>
+<!-- end footer -->
+
+</body>
+</html> 

@@ -1,4 +1,4 @@
-=== Mon Feb 24 13:19:28 MST 2014 ===
+### Mon Feb 24 13:19:28 MST 2014 
 
 Mailerbot is a perl script that emails customers customisable messages.
 
@@ -34,89 +34,114 @@ The output message in the above examples would look like
 --snip--
 
 
-== Danger level ==
-This script can email all customers if you want so care should be taken to ensure that you have messaging right before mailing and your list is correct or customers will report spam. Also keep consistency. The script looks for pipe delimited input for all input files. If you use <code>user_keys</code> for customer IDs use them in all files. Failing to do so will result in the script not excluding customers because no matches will be found between <code>user_ids</code> and <code>user_keys</code>.
+## Danger level 
+This script can email all customers if you want so care should be taken to ensure that you have messaging right before mailing and your list is correct or customers will report spam. Also keep consistency. The script looks for pipe delimited input for all input files. If you use ```user_keys``` for customer IDs use them in all files. Failing to do so will result in the script not excluding customers because no matches will be found between ```user_ids``` and ```user_keys```.
 
-== Usage ==
+## Usage 
 This script can be run manually or run by [[cron]]
 
-== Flags ==
+## Flags
+```console
  -c: Name of customer file, customers (one per line) will be notified if possible.
  -e: Name of exclude customer file list, customers (one per line) will NOT be notified.
  -n: Name of notice file whose contents will be sent to users.
  -x: This (help) message.
+```
 
-== Example ==
+## Example 
 
- mailerbot.pl -c customer.lst -n notice.txt -e exclude.lst >unmailed_customers.lst
+ ```mailerbot.pl -c customer.lst -n notice.txt -e exclude.lst >unmailed_customers.lst```
 
-== Input file examples ==
+## Input file examples
+#### Example: customer.txt
+```console
 head customer.lst
 21221012345678|Can you check if still have the disk for 'Room with a view'|
 21221011111111|Did you forget to return 'Ironman II'?|
 21221011111112|Did you forget to return 'Senna'?|
 21221011111113|Did you forget to return 'The Mummy Returns'?|
 116455|Did you forget to return 'Batman'?|
+```
 
+#### Example: AV Incomplete Customer Files
+```console
+==> incomplete_item_customers.lst # This is the exact file name produced by AVI.
+21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
+==> complete_item_customers.lst   # This is the exact file name produced by AVI.
+21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
+```
+
+#### Example: notice.txt
+```console
 head notice.txt
 subject:Missing items
 Just a friendly reminder. We notice that you returned an item today but part of it was missing.
 footer:Your friends at EPL!
+```
 
+#### Example: exlcude.lst
+```console
 head exlcude.lst
 21221000000007
 21221000000006
 1237
-
+```
+#### Example: unmailed_customers.lst
+```console
 head unmailed_customers.lst
 21221000000007||
 21221000000006||
 1237||
 21221011111113|| 
+```
 
-=== Notes on Notices ===
+### Notes on Notices 
 Notices follow these rules:
-1 if the notice is missing the script exits.
-2 if the notice is empty the script exits.
-3 if the message body of a notice is empty the script exits.
-4 both footer and subject may be empty but a warning will be issued if the subject is empty.
+1) If the notice is missing the script exits.
+2) If the notice is empty the script exits.
+3) If the message body of a notice is empty the script exits.
+4) Both footer and subject may be empty but a warning will be issued if the subject is empty.
 
 In general customer files can use formatting like this:
+ ```console
  subject: HOLD Cancellation Notice.
  Greetings!
  This is a message to let you know that the following holds have been cancelled.
  # A comment can be put in the file like this. The line must start with a '#' or it will be sent too.
  footer: Signed EPL (we share)
-but the <code>footer: </code> and <code>subject: </code> tags can appear in any line order but must appear at the beginning of a line.
+ ```
+but the ```footer: ``` and ```subject: ``` tags can appear in any line order but must appear at the beginning of a line.
 
-=== Customer files ===
+### Customer files 
 The following is an example of a well formed customer file. All lines listed below are legal formats. Consecutive white space causes
 formatting errors and is so is removed during processing, and does not appear in out-going messages.
- 21221012345678|message one|message two|
- 21221020902471|message|
- 21221011111111
- 21221019003992|The big sleep  Tom Wild Date 2014-05-05 | Phil Collins P.Collins April 21, 2014|
+```console
+21221012345678|message one|message two|
+21221020902471|message|
+21221011111111
+21221019003992|The big sleep  Tom Wild Date 2014-05-05 | Phil Collins P.Collins April 21, 2014|
+```
 
-=== Exclude files ===
+### Exclude files 
 are used to exclude customers from the mailing process. Customer IDs or user keys must appear one-per-line, but may 
 include additional information after the first pipe, it will be ignored.
- 21221011111111| data_1| data_2| ...| data_n |
+ ```21221011111111| data_1| data_2| ...| data_n |```
 
-== Current status ==
+## Current status 
 Version 0.3
 
-== Location ==
- /s/sirsi/Unicorn/Bincustom
+## Location 
+```/s/sirsi/Unicorn/Bincustom```
 
 
-Product Description:
+### Product Description:
 Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
 
-Repository Information:
+### Repository Information:
 This product is under version control using Git.
 
-Dependencies:
+### Dependencies:
 None
 
-Known Issues:
+### Known Issues:
 None
