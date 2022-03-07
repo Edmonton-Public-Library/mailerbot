@@ -38,7 +38,7 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot/AVIncomplete
 fi
-VERSION="0.00.01"
+VERSION="0.00.02"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
@@ -64,11 +64,17 @@ Usage: $APP [-option]
 
   These terms are translated into values found in double-square brackets as follows.
 
-  AVIncompleteIsComplete.hmtl and AVIncompleteNotice.html
+  AVIncompleteIsComplete.html and AVIncompleteNotice.html
   [[noticeDate]],[[firstName]],[[title]],[[itemId]],[[librDesc]]
 
   noticeDate | firstName       | title            ,                         | itemId       | librDesc
   2022-03-04 |Billy Balzac     |Cats / by Jim Pipe, insert / booklet missing|31221096645630|ABB
+
+  OnOrderCancelHoldNotice.html 
+    [[noticeDate]],[[firstName]],[[title]]
+
+  noticeDate | firstName       | title (and search link)                        
+  2022-03-04 |Billy Balzac     |<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>
 
   -c, --customers={customer.lst}: Required. Text file of customer and item information shown above.
   -d, --debug turn on debug logging.
@@ -79,7 +85,13 @@ Usage: $APP [-option]
   -V, --VARS: Display all set variables.
   -x, --xhelp: display usage message and exit.
 
-  Version: $VERSION
+  Examples:
+  # Run $APP on production but don't actually mail the customer(s)
+  $0 --customers=test_customers.lst --template=./notice_template.html --debug --VARS
+
+  # Run $APP in production environment.
+  $0 --customers=customers.lst --template=/foo/bar/notice_template.html
+
 EOFU!
 	exit 1
 }
@@ -112,6 +124,14 @@ logerr()
     fi
 }
 
+# Emails customer an html notice.
+# Currently, the only applications that email customers are as follows.
+#   notify_customers.sh
+#   notifycancelholds.sh
+# Both applications use similar formatted data, but notifycancelholds.sh 
+# uses only the customer name and title in it's template text. No matter.
+# If the librDesc, itemId are missing, as they are in data from notifycancelholds.sh 
+# mailerbothtml.sh will be ignored.
 email_customer()
 {
     [[ -z "$1" ]] && return
@@ -122,6 +142,7 @@ email_customer()
     local notice_file=${customer_id}.${FILE_DATE}.html
     local firstName=""
     local title=$(echo $customer | awk -F "|" '{print $2 $3}')
+    # These next two values may be empty, and are not used if run by notifycancelholds.sh
     local itemId=$(echo $customer | awk -F "|" '{print $4}')
     local librDesc=$(echo $customer | awk -F "|" '{print $5}')
     local email=""
@@ -129,9 +150,9 @@ email_customer()
         firstName="Balzac"
         email="example@domain.com"
     else
-        # TODO: Check this is the flag for seluser.
-        firstName=$(echo $customer_id | seluser -iB -o--first_name)
-        email=$(echo $customer_id | seluser -iB -oX.9007.)
+        # Reference the API for customer's first name and email, and remove trailing pipe delimiter.
+        firstName=$(echo $customer_id | seluser -iB -o--first_name | awk -F "|" '{print $1}')
+        email=$(echo $customer_id | seluser -iB -oX.9007. | awk -F "|" '{print $1}')
     fi
     # Log if the customer is unmailable.
     if [ -z "$email" ]; then
@@ -149,11 +170,20 @@ email_customer()
     }' $HTML_TEMPLATE >$notice_file
     # Don't mail if we are on dev server.
     if [ "$DEV" == true ]; then
-        logit "DEBUG: $notice_file created."
+        logit "DEV: $notice_file created."
+    elif [ "$DEBUG" == true ]; then
+        if [ -s "$notice_file" ]; then
+            logit "DEBUG: customer $customer_id mailed about item: $itemId, $title using ${HTML_TEMPLATE}."
+            logit "==snip=="
+            cat $notice_file >>$LOG
+            logit "==snip=="
+        else
+            logerr "DEBUG: failed to create $notice_file for customer ${customer_id}."
+        fi
     else
-        # TODO: check edpl's mailx client for the correct flag to append a file.
+        # Mail the customer.
         if mailx -s "$SUBJECT" -a $notice_file $email; then
-            logit "customer $customer_id mailed about item: $itemId, $title, borrowed from $librDesc using $HTML_TEMPLATE"
+            logit "customer $customer_id mailed about item: $itemId, $title using ${HTML_TEMPLATE}."
         else
             logerr "mailx failed. Unable to notify customer ${customer_id}."
             tar uvf failed_notices.tar $notice_file
@@ -192,12 +222,12 @@ do
         ;;
     -s|--subject)
 		shift
-        logit "Changeing subject to '$1'"
+        logit "changeing subject to '$1'"
 		SUBJECT="$1"
 		;;
     -t|--template)
 		shift
-        logit "Using template $1"
+        logit "using template $1"
 		HTML_TEMPLATE=$1
 		;;
     -V|--VARS)
