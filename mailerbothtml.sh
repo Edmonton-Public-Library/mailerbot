@@ -34,7 +34,7 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 fi
-VERSION="1.00.00"
+VERSION="1.01.00"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
@@ -43,6 +43,7 @@ HTML_TEMPLATE=""
 LINE_NO=0
 NOTICE_DATE=$(date +'%a %d %h %Y')
 FILE_DATE=$(date +'%Y%m%d')
+UNMAILABLE_CUSTOMERS=$WORKING_DIR/unmailable_customers.txt
 SUBJECT="EPL notice"
 ###############################################################################
 # Display usage message.
@@ -58,22 +59,37 @@ Usage: $APP [-option]
   User ID       | Title            | Additional infomation  | Item ID      | Branch
   21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
 
-  These terms are translated into values found in double-square brackets as follows.
+  The script will automatically search for the user first name and their email. 
+  If the email is not found it is reported to the $UNMAILABLE_CUSTOMERS customers file.
+  
+  Once the user's information is queried, the terms in double-square brackets 
+  are substituted. The following template values can be found in the current version 
+  of the html templates for AV Incomplete (AVIncompleteIsComplete.html and AVIncompleteNotice.html)
 
-  AVIncompleteIsComplete.html and AVIncompleteNotice.html
-  [[noticeDate]],[[firstName]],[[title]],[[itemId]],[[librDesc]]
+    [[noticeDate]],[[firstName]],[[title]],[[itemId]],[[librDesc]]
+  
+  The data sent from AV Incomplete is as follows.
+    21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
 
-  noticeDate | firstName       | title            ,                         | itemId       | librDesc
-  2022-03-04 |Billy Balzac     |Cats / by Jim Pipe, insert / booklet missing|31221096645630|ABB
+  This script uses seluser API to look up the customer's first name and email.
+  noticeDate | firstName  | title            ,                         | itemId       | librDesc
+  2022-03-04 | Balzac     |Cats / by Jim Pipe, insert / booklet missing|31221096645630|ABB
 
-  OnOrderCancelHoldNotice.html 
+  Cancelled on-order item html template (OnOrderCancelHoldNotice.html) has fewer html template strings, 
+  but are handled with the same logic.
+  The data from notify_customers.sh is as follows.
+    21221012345678|<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||
+
+  This scripts needs the following.
     [[noticeDate]],[[firstName]],[[title]]
 
-  noticeDate | firstName       | title (and search link)                        
-  2022-03-04 |Billy Balzac     |<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>
+  So a lookup is done and the values used to populate the html template text.
+    noticeDate | firstName | title (and search link)                        
+    2022-03-04 | Balzac    |<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||
 
   -c, --customers={customer.lst}: Required. Text file of customer and item information shown above.
-  -d, --debug turn on debug logging.
+  -d, --debug turn on debug logging. The email content is written to the $LOG 
+     file but no email is sent.
   -h, --help: display usage message and exit.
   -s, --subject{Subject string}: Replace the default email subject line '$SUBJECT'.
   -t, --template={template.html}: Required. HTML template file to use.
@@ -83,10 +99,10 @@ Usage: $APP [-option]
 
   Examples:
   # Run $APP on production but don't actually mail the customer(s)
-  $0 --customers=test_customers.lst --template=./notice_template.html --debug --VARS
+  $0 --customers=/foo/bar/test_customers.lst --template=/foo/bar/notice_template.html --debug --VARS
 
   # Run $APP in production environment.
-  $0 --customers=customers.lst --template=/foo/bar/notice_template.html
+  $0 --customers=/foo/bar/customers.lst --template=/foo/bar/notice_template.html
 
 EOFU!
 	exit 1
@@ -153,6 +169,8 @@ email_customer()
     # Log if the customer is unmailable.
     if [ -z "$email" ]; then
         logit "No email for customer: $customer"
+        DATE_TIME=$(date +"%Y-%m-%d %H:%M:%S")
+        echo "[$DATE_TIME] $customer" >>$UNMAILABLE_CUSTOMERS
         return
     fi
 
@@ -164,7 +182,12 @@ email_customer()
     }{
         gsub(/\[\[noticeDate\]\]/, noticeDate);
         gsub(/\[\[firstName\]\]/, firstName);
+        # For some strange reason "&" gets replaced with the regex search string.
+        # A dumb fix: replace it in the URL with "__AMP__", and after substitution of [[title]]
+        # change it back to an "&" - double-escaped. This works, is not ideal, but I have to get this to production.
+        gsub(/[&]/, "__AMP__", title);
         gsub(/\[\[title\]\]/, title);
+        gsub(/__AMP__/, "\\&", $0);
         gsub(/\[\[itemId\]\]/, itemId);
         gsub(/\[\[librDesc\]\]/, librDesc);
         print;
@@ -233,7 +256,7 @@ do
 		HTML_TEMPLATE=$1
 		;;
     -V|--VARS)
-        [[ "$DEV" == true ]] && echo -e "\$HOST=$HOST\n\$DEV=$DEV\n\$WORKING_DIR=$WORKING_DIR\n\$VERSION=$VERSION\n\$APP=$APP\n\$DEBUG=$DEBUG\n\$LOG=$LOG\n\$CUSTOMER_FILE=$CUSTOMER_FILE\n\$HTML_FILE=$HTML_FILE\n\$SUBJECT=$SUBJECT\n"
+        [[ "$DEV" == true ]] && echo -e "\$HOST=$HOST\n\$DEV=$DEV\n\$WORKING_DIR=$WORKING_DIR\n\$UNMAILABLE_CUSTOMERS=$UNMAILABLE_CUSTOMERS\n\$VERSION=$VERSION\n\$APP=$APP\n\$DEBUG=$DEBUG\n\$LOG=$LOG\n\$CUSTOMER_FILE=$CUSTOMER_FILE\n\$HTML_FILE=$HTML_FILE\n\$SUBJECT=$SUBJECT\n"
         ;;
     -v|--version)
         echo "$0 version: $VERSION"
