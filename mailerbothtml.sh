@@ -26,19 +26,15 @@
 #   0.1 - Initial release on ILS (edpl.sirsidynix.net)
 #
 #################################################################
-# ==> incomplete_item_customers.lst <==
-# 21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
-# ==> complete_item_customers.lst <==
-# 21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
 HOST=$(hostname)
 [[ "$HOST" == "ubuntu-node" ]] && DEV=true || DEV=false
 if [ "$DEV" == true ]; then
-    WORKING_DIR=/home/anisbet/Dev/mailerHTML
+    WORKING_DIR=/home/anisbet/Dev/mailerbothtml
 else
     . ~/.bashrc
-    WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot/AVIncomplete
+    WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 fi
-VERSION="0.00.03_DEV"
+VERSION="1.00.00"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
