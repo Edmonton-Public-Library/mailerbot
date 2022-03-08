@@ -38,7 +38,7 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot/AVIncomplete
 fi
-VERSION="0.00.02"
+VERSION="0.00.03_DEV"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
@@ -47,7 +47,7 @@ HTML_TEMPLATE=""
 LINE_NO=0
 NOTICE_DATE=$(date +'%a %d %h %Y')
 FILE_DATE=$(date +'%Y%m%d')
-SUBJECT="EPL notice, item returned incomplete"
+SUBJECT="EPL notice"
 ###############################################################################
 # Display usage message.
 # param:  none
@@ -159,8 +159,13 @@ email_customer()
         logit "No email for customer: $customer"
         return
     fi
+
     # Read in the template file and replace templates with the customer's data.
-    awk -v "noticeDate=$noticeDate" -v "firstName=$firstName" -v "title=$title" -v "itemId=$itemId" -v "librDesc=$librDesc" '{
+    awk -v "noticeDate=$noticeDate" -v "firstName=$firstName" -v "title=$title" -v "itemId=$itemId" -v "librDesc=$librDesc" -v "subject=$SUBJECT" -v "email=$email" 'BEGIN{
+        printf "To: %s\n", email;
+        printf "Subject: %s\n", subject;
+        printf "Content-type: text/html\n\n";
+    }{
         gsub(/\[\[noticeDate\]\]/, noticeDate);
         gsub(/\[\[firstName\]\]/, firstName);
         gsub(/\[\[title\]\]/, title);
@@ -182,10 +187,11 @@ email_customer()
         fi
     else
         # Mail the customer.
-        if mailx -s "$SUBJECT" -a $notice_file $email; then
+        cat $notice_file | sendmail -t
+        if [ "$?" ]; then
             logit "customer $customer_id mailed about item: $itemId, $title using ${HTML_TEMPLATE}."
         else
-            logerr "mailx failed. Unable to notify customer ${customer_id}."
+            logerr "sendmail failed. Unable to notify customer ${customer_id}."
             tar uvf failed_notices.tar $notice_file
         fi
         rm $notice_file
