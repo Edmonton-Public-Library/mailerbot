@@ -23,7 +23,7 @@
 # Dependencies: 
 # Version:
 #   
-#   1.02.00 - Add missing piece description to AVIncomplete notice.
+#   1.02.01 - Use library names instead of branch codes.
 #
 #################################################################
 HOST=$(hostname)
@@ -34,7 +34,7 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 fi
-VERSION="1.02.00"
+VERSION="1.02.01"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
@@ -72,8 +72,8 @@ Usage: $APP [-option]
     21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
 
   This script uses seluser API to look up the customer's first name and email.
-  noticeDate | firstName  | title            ,                         | itemId       | librDesc
-  2022-03-04 | Balzac     |Cats / by Jim Pipe, insert / booklet missing|31221096645630|ABB
+  noticeDate | firstName  | title            | missing piece           | itemId       | librDesc
+  2022-03-04 | Balzac     |Cats / by Jim Pipe| insert / booklet missing|31221096645630|ABB
 
   Cancelled on-order item html template (OnOrderCancelHoldNotice.html) has fewer html template strings, 
   but are handled with the same logic.
@@ -158,16 +158,20 @@ email_customer()
     local description=$(echo $customer | awk -F "|" '{print $3}')
     # These next two values may be empty, and are not used if run by notifycancelholds.sh
     local itemId=$(echo $customer | awk -F "|" '{print $4}')
-    # TODO: Lookup branch names instead of codes.
-    local librDesc=$(echo $customer | awk -F "|" '{print $5}')
+    # Lookup branch code.  
+    local branch=$(echo $customer | awk -F "|" '{print $5}')
+    local librDesc=""
     local email=""
     if [ "$DEV" == true ]; then
         firstName="Balzac"
         email="example@domain.com"
+        librDesc="$branch (library code in DEV mode)"
     else
         # Reference the API for customer's first name and email, and remove trailing pipe delimiter.
         firstName=$(echo $customer_id | seluser -iB -o--first_name | awk -F "|" '{print $1}')
         email=$(echo $customer_id | seluser -iB -oX.9007. | awk -F "|" '{print $1}')
+        # Lookup branch name from branch code codes.
+        librDesc=$(getpol -tLIBR | grep $branch | awk -F "|" '{print $22}')
     fi
     # Log if the customer is unmailable.
     if [ -z "$email" ]; then
