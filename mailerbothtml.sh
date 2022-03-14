@@ -23,7 +23,7 @@
 # Dependencies: 
 # Version:
 #   
-#   0.1 - Initial release on ILS (edpl.sirsidynix.net)
+#   1.02.00 - Add missing piece description to AVIncomplete notice.
 #
 #################################################################
 HOST=$(hostname)
@@ -34,7 +34,7 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 fi
-VERSION="1.01.00"
+VERSION="1.02.00"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
@@ -153,9 +153,12 @@ email_customer()
     [[ -z "$customer_id" ]] && { logit "customer id missing on line $LINE_NO"; return; }
     local notice_file=${customer_id}.${FILE_DATE}.html
     local firstName=""
-    local title=$(echo $customer | awk -F "|" '{print $2 $3}')
+    local title=$(echo $customer | awk -F "|" '{print $2}')
+    # The $3 item is additional info about the item. In AVI it is a description of the missing piece. It may be empty in other message types.
+    local description=$(echo $customer | awk -F "|" '{print $3}')
     # These next two values may be empty, and are not used if run by notifycancelholds.sh
     local itemId=$(echo $customer | awk -F "|" '{print $4}')
+    # TODO: Lookup branch names instead of codes.
     local librDesc=$(echo $customer | awk -F "|" '{print $5}')
     local email=""
     if [ "$DEV" == true ]; then
@@ -175,7 +178,7 @@ email_customer()
     fi
 
     # Read in the template file and replace templates with the customer's data.
-    awk -v "noticeDate=$noticeDate" -v "firstName=$firstName" -v "title=$title" -v "itemId=$itemId" -v "librDesc=$librDesc" -v "subject=$SUBJECT" -v "email=$email" 'BEGIN{
+    awk -v "noticeDate=$noticeDate" -v "firstName=$firstName" -v "title=$title" -v "itemId=$itemId" -v "librDesc=$librDesc" -v "subject=$SUBJECT" -v "email=$email" -v "description=$description" 'BEGIN{
         printf "To: %s\n", email;
         printf "Subject: %s\n", subject;
         printf "Content-type: text/html\n\n";
@@ -188,6 +191,7 @@ email_customer()
         gsub(/[&]/, "__AMP__", title);
         gsub(/\[\[title\]\]/, title);
         gsub(/__AMP__/, "\\&", $0);
+        gsub(/\[\[missingPiece\]\]/, description);
         gsub(/\[\[itemId\]\]/, itemId);
         gsub(/\[\[librDesc\]\]/, librDesc);
         print;
