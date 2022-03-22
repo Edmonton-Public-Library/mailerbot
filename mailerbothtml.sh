@@ -23,7 +23,7 @@
 # Dependencies: 
 # Version:
 #   
-#   1.02.01 - Use library names instead of branch codes.
+#   1.03.01 - Create -l argument log file if it doesn't exist.
 #
 #################################################################
 HOST=$(hostname)
@@ -34,10 +34,11 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 fi
-VERSION="1.02.01"
+VERSION="1.03.01"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
+CALLER_LOG="/dev/null"
 CUSTOMER_FILE=""
 HTML_TEMPLATE=""
 LINE_NO=0
@@ -91,6 +92,9 @@ Usage: $APP [-option]
   -d, --debug turn on debug logging. The email content is written to the $LOG 
      file but no email is sent.
   -h, --help: display usage message and exit.
+  -l, --log_file={/foo/bar.log}: Log transactions to an additional log, like the caller's log file.
+      After this is set, all additional messages from $APP will ALSO be written to \$CALLER_LOG which
+      is $CALLER_LOG by default.
   -s, --subject{Subject string}: Replace the default email subject line '$SUBJECT'.
   -t, --template={template.html}: Required. HTML template file to use.
   -v, --version: display application version and exit.
@@ -104,6 +108,9 @@ Usage: $APP [-option]
   # Run $APP in production environment.
   $0 --customers=/foo/bar/customers.lst --template=/foo/bar/notice_template.html
 
+  # Run $APP but change the log.
+  $0 --log_file=/foo/bar/avincomplete.log --customers=/foo/bar/customers.lst --template=/foo/bar/notice_template.html
+
 EOFU!
 	exit 1
 }
@@ -114,26 +121,15 @@ logit()
 {
     local message="$1"
     local time=$(date +"%Y-%m-%d %H:%M:%S")
-    if [ -t 0 ]; then
-        # If run from an interactive shell message STDOUT and LOG.
-        echo -e "[$time] $message" | tee -a $LOG
-    else
-        # If run from cron do write to log.
-        echo -e "[$time] $message" >>$LOG
-    fi
+    # If run from an interactive shell message STDOUT and LOG.
+    echo -e "[$time] $message" | tee -a $LOG -a $CALLER_LOG
 }
-# Logs messages as an error and exits with status code '1'.
+# Logs messages with special error prefix.
 logerr()
 {
-    local message="$1 exiting!"
+    local message="$1"
     local time=$(date +"%Y-%m-%d %H:%M:%S")
-    if [ -t 0 ]; then
-        # If run from an interactive shell message STDOUT and LOG.
-        echo -e "[$time] **error: $message" | tee -a $LOG
-    else
-        # If run from cron do write to log.
-        echo -e "[$time] **error: $message" >>$LOG
-    fi
+    echo -e "[$time] **error: $message" | tee -a $LOG -a $CALLER_LOG
 }
 
 # Emails customer an html notice.
@@ -213,12 +209,13 @@ email_customer()
             logerr "DEBUG: failed to create $notice_file for customer ${customer_id}."
         fi
     else
-        # Mail the customer.
+        # Mail the customer. The headers are prepended to the html notice above.
         cat $notice_file | sendmail -t
         if [ "$?" ]; then
             logit "customer $customer_id mailed about item: $itemId, $title using ${HTML_TEMPLATE}."
         else
             logerr "sendmail failed. Unable to notify customer ${customer_id}."
+            # The failed_notices.tar file needs to exist to be updated. The failed notices are discarded otherwise.
             tar uvf failed_notices.tar $notice_file
         fi
         rm $notice_file
@@ -231,7 +228,7 @@ email_customer()
 # -l is for long options with double dash like --version
 # the comma separates different long options
 # -a is for long options with single dash like -version
-options=$(getopt -l "customers:,debug,help,subject:,template:,VARS,version,xhelp" -o "c:dhs:t:Vvx" -a -- "$@")
+options=$(getopt -l "customers:,debug,help,log_file:,subject:,template:,VARS,version,xhelp" -o "c:dhl:s:t:Vvx" -a -- "$@")
 if [ $? != 0 ] ; then echo "Failed to parse options...exiting." >&2 ; exit 1 ; fi
 # set --:
 # If no arguments follow this option, then the positional parameters are unset. Otherwise, the positional parameters
@@ -253,9 +250,24 @@ do
         usage
         exit 0
         ;;
+    -l|--log_file)
+		shift
+        logit "adding logging to '$1'"
+        if [ -f "$1" ]; then
+		    APP_LOG="$1"
+        else
+            # Doesn't exist but try to create it.
+            if touch $1; then
+                logit "$1 added as a logging destination."
+                APP_LOG="$1"
+            else # Otherwise just keep settings as they are and report issue.
+                logerr "file '$1' not found, and failed to create it. Logging unchanged."
+            fi
+        fi
+		;;
     -s|--subject)
 		shift
-        logit "changeing subject to '$1'"
+        logit "changeing subject to '$1'."
 		SUBJECT="$1"
 		;;
     -t|--template)
