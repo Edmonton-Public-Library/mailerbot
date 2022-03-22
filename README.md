@@ -1,3 +1,60 @@
+# Mailerbot 
+Mailerbot is not two projects, the original mailerbot.pl which can still be used,
+and a new application called mailerbothtml.sh. This new script allows the sendning
+of HTML messages with customized text throughout. The templates reside in each 
+projects' folder (see AVIncomplete notifiy_customers.sh and notifycancelholds.sh.)
+
+## mailerbothtml.sh
+Prepares and mails HTML notices to customers.
+
+  The customer file is expected to follow the following format.  
+  ```User ID       | Title            | Additional infomation  | Item ID      | Branch```  
+  ```21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB```  
+
+  The script will automatically search for the user first name and their email. 
+  If the email is not found it is reported to the $UNMAILABLE_CUSTOMERS customers file.
+  
+  Once the user's information is queried, the terms in double-square brackets 
+  are substituted. The following template values can be found in the current version 
+  of the html templates for AV Incomplete (AVIncompleteIsComplete.html and AVIncompleteNotice.html)
+
+    ```[[noticeDate]],[[firstName]],[[title]],[[itemId]],[[librDesc]]```  
+  
+  The data sent from AV Incomplete is as follows.
+    ```21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB```  
+
+  This script uses seluser API to look up the customer's first name and email.  
+  ```noticeDate | firstName  | title            | missing piece           | itemId       | librDesc```  
+  ```2022-03-04 | Balzac     |Cats / by Jim Pipe| insert / booklet missing|31221096645630|ABB```  
+
+  Cancelled on-order item html template (OnOrderCancelHoldNotice.html) has fewer html template strings, 
+  but are handled with the same logic.
+  The data from notify_customers.sh is as follows.   
+    ```21221012345678|<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||```
+
+  This scripts needs the following.   
+    ```[[noticeDate]],[[firstName]],[[title]]```
+
+  So a lookup is done and the values used to populate the html template text.   
+    ```noticeDate | firstName | title (and search link)```                        
+    ```2022-03-04 | Balzac    |<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||```
+
+### Flags
+<pre>
+  -c, --customers={customer.lst}: Required. Text file of customer and item information shown above.
+  -d, --debug turn on debug logging. The email content is written to the $LOG 
+     file but no email is sent.
+  -h, --help: display usage message and exit.
+  -l, --log_file={/foo/bar.log}: Log transactions to an additional log, like the caller's log file.
+      After this is set, all additional messages from $APP will ALSO be written to \$CALLER_LOG which
+      is $CALLER_LOG by default.
+  -s, --subject{Subject string}: Replace the default email subject line '$SUBJECT'.
+  -t, --template={template.html}: Required. HTML template file to use.
+  -v, --version: display application version and exit.
+  -V, --VARS: Display all set variables.
+  -x, --xhelp: display usage message and exit.
+</pre>
+
 ### Mon Feb 24 13:19:28 MST 2014 
 
 Mailerbot is a perl script that emails customers customisable messages.
