@@ -54,62 +54,83 @@ usage()
 {
     cat << EOFU!
 Usage: $APP [-option]
-  Prepares and mails HTML notices to customers.
+Prepares and mails HTML notices to customers. 
+How dynamic injection happens depends on the HTML template file, as $APP
+will do its best to fill in all [[template_variable]] values. 
+For example the minimum customer file contains a column of user IDs. 
+That is required to find the user's email and can be used to get the user's first name
+if the template defines a [[firstName]] variable. 
 
-  The customer file is expected to follow the following format.
-  User ID       | Title            | Additional infomation  | Item ID      | Branch
-  21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
+Template variables that $APP understands (in no particular order):
+# [[noticeDate]]
+# [[firstName]]
+# [[title]]
+# [[itemId]]
+# [[librDesc]]
 
-  The script will automatically search for the user first name and their email. 
-  If the email is not found it is reported to the $UNMAILABLE_CUSTOMERS customers file.
-  
-  Once the user's information is queried, the terms in double-square brackets 
-  are substituted. The following template values can be found in the current version 
-  of the html templates for AV Incomplete (AVIncompleteIsComplete.html and AVIncompleteNotice.html)
+And the template need not define all, or even any of these. If it does however, 
+$APP uses the following information from the customer file to dynamically 
+generate and inject information into any of the above variables that may 
+be defined in the HTML template.
 
-    [[noticeDate]],[[firstName]],[[title]],[[itemId]],[[librDesc]]
-  
-  The data sent from AV Incomplete is as follows.
-    21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB
+== Customer File Format ==
+Each line represents one customer and can have from one to five fields of pipe-delimited information. 
+# '''User_ID''' - Required. Used to look up the customer email, and first name if HTML template 
+  defines [[firstName]].
+# '''Title''' - Optional. Typically used to fill [[title]] if the HTML template defines it. 
+  If other fields below are required, this one can be blank.
+# '''Description''' - Optional. Typically appended to [[title]] if the HTML template defines it. 
+  If other fields below are required, this one can be blank. If the 'Title' column was blank any 
+  [[title]] will be filled with the 'Description'.
+# '''Item ID''' - Optional. Used to file [[itemId]] if defined.
+# '''Branch code''' - Optional. Used to fill [[librDesc]] by using getpol to look up the full 
+  branch name from the 3-character branch code.
 
-  This script uses seluser API to look up the customer's first name and email.
-  noticeDate | firstName  | title            | missing piece           | itemId       | librDesc
-  2022-03-04 | Balzac     |Cats / by Jim Pipe| insert / booklet missing|31221096645630|ABB
+This is an example of a full, well-formed customer record.
+ 21221012345678|Treasure Island / R.L. Stevenson - 1989|Missing features disc|31221012345678|ABB
+This is a example of a minimal customer record.
+ 21221012345678|
+An example where the HTML template only defines [[itemId]].
+ 21221012345678|||31221012345678|
 
-  Cancelled on-order item html template (OnOrderCancelHoldNotice.html) has fewer html template strings, 
-  but are handled with the same logic.
-  The data from notify_customers.sh is as follows.
-    21221012345678|<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||
+== How Variables are Satisfied ==
+# [[noticeDate]]: Generated dynamically by $APP at runtime.
+# [[firstName]]: The first field in a customer list is the users' ID which $APP 
+  uses to look up the users' first name and email.
+# [[title]]: Title / Author - pub date, what-have-you and description are concatenated 
+  in the outgoing message.
+# [[itemId]]: Used as is from column 3. A hack could be to put some other data in this 
+  column then use [[itemId]] where you want the text to go.
+# [[librDesc]]: $APP will dynamically look up the full branch name given a 
+  three character branch code. The lookup is done through getpol.
 
-  This scripts needs the following.
-    [[noticeDate]],[[firstName]],[[title]]
+Once the user's information is queried, the terms in double-square brackets are substituted. 
+If a variable is not defined in the HTML template, no text is injected, even if it is defined 
+in the customer.lst file. If a variable is defined, but is not available in the customer 
+file the [[variable]] is replaced with an empty string.
 
-  So a lookup is done and the values used to populate the html template text.
-    noticeDate | firstName | title (and search link)                        
-    2022-03-04 | Balzac    |<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||
-
-  -c, --customers={customer.lst}: Required. Text file of customer and item information shown above.
-  -d, --debug turn on debug logging. The email content is written to the $LOG 
+ -c, --customers={customer.lst}: Required. Text file of customer and item information shown above.
+ -d, --debug turn on debug logging. The email content is written to the $LOG 
      file but no email is sent.
-  -h, --help: display usage message and exit.
-  -l, --log_file={/foo/bar.log}: Log transactions to an additional log, like the caller's log file.
-      After this is set, all additional messages from $APP will ALSO be written to \$CALLER_LOG which
-      is $CALLER_LOG by default.
-  -s, --subject{Subject string}: Replace the default email subject line '$SUBJECT'.
-  -t, --template={template.html}: Required. HTML template file to use.
-  -v, --version: display application version and exit.
-  -V, --VARS: Display all set variables.
-  -x, --xhelp: display usage message and exit.
+ -h, --help: display usage message and exit.
+ -l, --log_file={/foo/bar.log}: Log transactions to an additional log, like the caller's log file.
+     After this is set, all additional messages from $APP will ALSO be written to \$CALLER_LOG which
+     is $CALLER_LOG by default.
+ -s, --subject{Subject string}: Replace the default email subject line '$SUBJECT'.
+ -t, --template={template.html}: Required. HTML template file to use.
+ -v, --version: display application version and exit.
+ -V, --VARS: Display all set variables.
+ -x, --xhelp: display usage message and exit.
 
-  Examples:
-  # Run $APP on production but don't actually mail the customer(s)
-  $0 --customers=/foo/bar/test_customers.lst --template=/foo/bar/notice_template.html --debug --VARS
+Examples:
+# Run $APP on production but don't actually mail the customer(s)
+$0 --customers=/foo/bar/test_customers.lst --template=/foo/bar/notice_template.html --debug --VARS
 
-  # Run $APP in production environment.
-  $0 --customers=/foo/bar/customers.lst --template=/foo/bar/notice_template.html
+# Run $APP in production environment.
+$0 --customers=/foo/bar/customers.lst --template=/foo/bar/notice_template.html
 
-  # Run $APP but change the log.
-  $0 --log_file=/foo/bar/avincomplete.log --customers=/foo/bar/customers.lst --template=/foo/bar/notice_template.html
+# Run $APP but change the log.
+$0 --log_file=/foo/bar/avincomplete.log --customers=/foo/bar/customers.lst --template=/foo/bar/notice_template.html
 
 EOFU!
 	exit 1
@@ -139,7 +160,7 @@ logerr()
 # Both applications use similar formatted data, but notifycancelholds.sh 
 # uses only the customer name and title in it's template text. No matter.
 # If the librDesc, itemId are missing, as they are in data from notifycancelholds.sh 
-# mailerbothtml.sh will be ignored.
+# $APP will be ignored.
 email_customer()
 {
     [[ -z "$1" ]] && return
