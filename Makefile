@@ -39,13 +39,17 @@ AVI_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot/AVIncomplete
 ON_ORDER_CANCEL_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Notifycancelholds
 CUSTOMER_ACTIVITY_NOTIFICATION_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/CustomerActivityNotification
 
-.PHONY: production html
+.PHONY: production html test
 
-production: html
+test:
+	scp ${LOCAL}/${HTML_APP} ${USER}@${TEST_SERVER}:${BIN_CUSTOM}
+	- scp ${LOCAL}/CustomerActivityNotification.html ${USER}@${TEST_SERVER}:${CUSTOMER_ACTIVITY_NOTIFICATION_DIR}
+
+production:
 	scp ${LOCAL}/${HTML_APP} ${USER}@${PRODUCTION_SERVER}:${BIN_CUSTOM}
 
 html:
 	- scp ${LOCAL}/AVIncomplete* ${USER}@${PRODUCTION_SERVER}:${AVI_DIR}
 	- scp ${LOCAL}/OnOrderCancelHoldNotice.html ${USER}@${PRODUCTION_SERVER}:${ON_ORDER_CANCEL_DIR}
 	- scp ${LOCAL}/CustomerActivityNotification.html ${USER}@${PRODUCTION_SERVER}:${CUSTOMER_ACTIVITY_NOTIFICATION_DIR}
-	- scp ${LOCAL}/CustomerActivityNotification.html ${USER}@${TEST_SERVER}:${CUSTOMER_ACTIVITY_NOTIFICATION_DIR}
+	
