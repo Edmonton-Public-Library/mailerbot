@@ -21,7 +21,8 @@
 # MA 02110-1301, USA.
 #
 # Written by Andrew Nisbet at Edmonton Public Library
-# Rev: 
+# Rev:
+#      0.3 - Add templates for Customer Activity Notification (cron) report.
 #      0.2 - Add mailerbothtml.sh and templates.
 #      0.1 - Modified target to point to Bincustom, added .PHONY. rule. 
 #      0.0 - Dev. 
@@ -33,24 +34,17 @@ USER=sirsi
 BIN_CUSTOM=~/Unicorn/Bincustom
 # BIN_CUSTOM=/software/EDPL/Unicorn/EPLwork/anisbet/EPL4Life/EmailTemplate/
 LOCAL=~/projects/mailerbot
-APP=mailerbot.pl
 HTML_APP=mailerbothtml.sh
 AVI_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot/AVIncomplete
 ON_ORDER_CANCEL_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Notifycancelholds
-ARGS=-x
-.PHONY: test_it put production html
+CUSTOMER_ACTIVITY_NOTIFICATION_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/CustomerActivityNotification
+
+.PHONY: production html
+
+production: html
+	scp ${LOCAL}/${HTML_APP} ${USER}@${PRODUCTION_SERVER}:${BIN_CUSTOM}
 
 html:
-	scp ${LOCAL}/${HTML_APP} ${USER}@${PRODUCTION_SERVER}:${BIN_CUSTOM}
 	- scp ${LOCAL}/AVIncomplete* ${USER}@${PRODUCTION_SERVER}:${AVI_DIR}
 	- scp ${LOCAL}/OnOrderCancelHoldNotice.html ${USER}@${PRODUCTION_SERVER}:${ON_ORDER_CANCEL_DIR}
-
-put: test_it
-	scp ${LOCAL}/${APP} ${USER}@${TEST_SERVER}:${BIN_CUSTOM}
-	ssh ${USER}@${TEST_SERVER} '${BIN_CUSTOM}/${APP} ${ARGS}'
-	
-test_it:
-	perl -c ${APP}
-
-production: test_it
-	scp ${LOCAL}/${APP} ${USER}@${PRODUCTION_SERVER}:${BIN_CUSTOM}
+	- scp ${LOCAL}/CustomerActivityNotification.html ${USER}@${PRODUCTION_SERVER}:${CUSTOMER_ACTIVITY_NOTIFICATION_DIR}

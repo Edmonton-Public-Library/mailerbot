@@ -2,7 +2,8 @@
 Mailerbot is not two projects, the original mailerbot.pl which can still be used,
 and a new application called mailerbothtml.sh. This new script allows the sendning
 of HTML messages with customized text throughout. The templates reside in each 
-projects' folder (see AVIncomplete notifiy_customers.sh and notifycancelholds.sh.)
+projects' folder (see AVIncomplete notifiy_customers.sh, notifycancelholds.sh,
+and customeractivitynotification.sh)
 
 ## mailerbothtml.sh
 Prepares and mails HTML notices to customers.
