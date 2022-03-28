@@ -48,3 +48,4 @@ html:
 	- scp ${LOCAL}/AVIncomplete* ${USER}@${PRODUCTION_SERVER}:${AVI_DIR}
 	- scp ${LOCAL}/OnOrderCancelHoldNotice.html ${USER}@${PRODUCTION_SERVER}:${ON_ORDER_CANCEL_DIR}
 	- scp ${LOCAL}/CustomerActivityNotification.html ${USER}@${PRODUCTION_SERVER}:${CUSTOMER_ACTIVITY_NOTIFICATION_DIR}
+	- scp ${LOCAL}/CustomerActivityNotification.html ${USER}@${TEST_SERVER}:${CUSTOMER_ACTIVITY_NOTIFICATION_DIR}
