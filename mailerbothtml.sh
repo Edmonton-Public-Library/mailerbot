@@ -34,7 +34,7 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 fi
-VERSION="1.03.02"
+VERSION="1.03.04"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
@@ -222,11 +222,7 @@ email_customer()
         logit "DEV: $notice_file created."
     elif [ "$DEBUG" == true ]; then
         if [ -s "$notice_file" ]; then
-            if [ -z "$itemId" ] && [ -z "$title" ]; then
-                logit "DEBUG: customer $customer_id mailed using ${HTML_TEMPLATE}."
-            else
-                logit "DEBUG: customer $customer_id mailed about item: $itemId, $title using ${HTML_TEMPLATE}."
-            fi
+            logit "DEBUG: customer $customer_id mailed using ${HTML_TEMPLATE}."
             logit "==snip=="
             cat $notice_file >>$LOG
             logit "==snip=="
@@ -237,7 +233,7 @@ email_customer()
         # Mail the customer. The headers are prepended to the html notice above.
         cat $notice_file | sendmail -t
         if [ "$?" ]; then
-            logit "customer $customer_id mailed about item: $itemId, $title using ${HTML_TEMPLATE}."
+            logit "customer $customer_id mailed using ${HTML_TEMPLATE}."
         else
             logerr "sendmail failed. Unable to notify customer ${customer_id}."
             # The failed_notices.tar file needs to exist to be updated. The failed notices are discarded otherwise.
