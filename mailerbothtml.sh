@@ -34,7 +34,7 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 fi
-VERSION="1.03.01"
+VERSION="1.03.02"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
@@ -188,7 +188,7 @@ email_customer()
         firstName=$(echo $customer_id | seluser -iB -o--first_name | awk -F "|" '{print $1}')
         email=$(echo $customer_id | seluser -iB -oX.9007. | awk -F "|" '{print $1}')
         # Lookup branch name from branch code codes.
-        librDesc=$(getpol -tLIBR | grep $branch | awk -F "|" '{print $22}')
+        librDesc=$(getpol -tLIBR | grep $branch 2>/dev/null | awk -F "|" '{print $22}')
     fi
     # Log if the customer is unmailable.
     if [ -z "$email" ]; then
@@ -222,7 +222,11 @@ email_customer()
         logit "DEV: $notice_file created."
     elif [ "$DEBUG" == true ]; then
         if [ -s "$notice_file" ]; then
-            logit "DEBUG: customer $customer_id mailed about item: $itemId, $title using ${HTML_TEMPLATE}."
+            if [ -z "$itemId" ] && [ -z "$title" ]; then
+                logit "DEBUG: customer $customer_id mailed using ${HTML_TEMPLATE}."
+            else
+                logit "DEBUG: customer $customer_id mailed about item: $itemId, $title using ${HTML_TEMPLATE}."
+            fi
             logit "==snip=="
             cat $notice_file >>$LOG
             logit "==snip=="
