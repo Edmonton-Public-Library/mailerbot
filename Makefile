@@ -46,6 +46,7 @@ test:
 production:
 	scp ${LOCAL}/${HTML_APP} ${USER}@${PRODUCTION_SERVER}:${BIN_CUSTOM}
 
+# Note: you can now just place updated HTML templates into the Symphony Notices directory.
 html:
 	scp ${LOCAL}/*.html ${USER}@${PRODUCTION_SERVER}:${NOTICE_DIR}
 	
