@@ -41,12 +41,6 @@ NOTICE_DIR=/software/EDPL/Unicorn/Notices
 
 test:
 	scp ${LOCAL}/${HTML_APP} ${USER}@${TEST_SERVER}:${BIN_CUSTOM}
-	- scp ${LOCAL}/CustomerActivityNotification.html ${USER}@${TEST_SERVER}:${NOTICE_DIR}
 
 production:
 	scp ${LOCAL}/${HTML_APP} ${USER}@${PRODUCTION_SERVER}:${BIN_CUSTOM}
-
-# Note: you can now just place updated HTML templates into the Symphony Notices directory.
-html:
-	scp ${LOCAL}/*.html ${USER}@${PRODUCTION_SERVER}:${NOTICE_DIR}
-	
