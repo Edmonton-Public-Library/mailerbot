@@ -32,15 +32,15 @@ PRODUCTION_SERVER=edpl.sirsidynix.net
 TEST_SERVER=edpltest.sirsidynix.net
 USER=sirsi
 BIN_CUSTOM=~/Unicorn/Bincustom
-# BIN_CUSTOM=/software/EDPL/Unicorn/EPLwork/anisbet/EPL4Life/EmailTemplate/
+ILS_MAIL_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 LOCAL=~/projects/mailerbot
 HTML_APP=mailerbothtml.sh
-NOTICE_DIR=/software/EDPL/Unicorn/Notices
 
 .PHONY: production html test
 
 test:
 	scp ${LOCAL}/${HTML_APP} ${USER}@${TEST_SERVER}:${BIN_CUSTOM}
-
+	scp ${LOCAL}/README.md ${USER}@${TEST_SERVER}:${ILS_MAIL_DIR}
 production:
 	scp ${LOCAL}/${HTML_APP} ${USER}@${PRODUCTION_SERVER}:${BIN_CUSTOM}
+	scp ${LOCAL}/README.md ${USER}@${PRODUCTION_SERVER}:${ILS_MAIL_DIR}
