@@ -31,7 +31,7 @@
 PRODUCTION_SERVER=edpl.sirsidynix.net
 TEST_SERVER=edpltest.sirsidynix.net
 USER=sirsi
-BIN_CUSTOM=~/Unicorn/Bincustom
+BIN_CUSTOM=/software/EDPL/Unicorn/Bincustom
 ILS_MAIL_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 LOCAL=~/projects/mailerbot
 HTML_APP=mailerbothtml.sh
