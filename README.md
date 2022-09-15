@@ -1,16 +1,26 @@
 # Mailerbot 
 Mailerbot is not two projects, the original mailerbot.pl which can still be used,
 and a new application called mailerbothtml.sh. This new script allows the sendning
-of HTML messages with customized text throughout. The templates reside in each 
-projects' folder (see AVIncomplete notifiy_customers.sh, notifycancelholds.sh,
-and customeractivitynotification.sh)
+of HTML messages with customized text throughout. The templates are specified as 
+a command line argument but should reside in the standard Symphony notices directory `~/Unicorn/Notices`.
+
+The following is a list of projects that rely on mailerbot.
+* AV Incomplete (for complete and incomplete notifications)
+* `notifiy_customers.sh`
+* `notifycancelholds.sh`
+* `customeractivitynotification.sh`
 
 ## mailerbothtml.sh
-Prepares and mails HTML notices to customers.
+Prepares and mails HTML notices to customers. Consider using this instead of `mailerbot.pl` which still works well for text based messages but not for HTML notices.
 
   The customer file is expected to follow the following format.  
   ```User ID       | Title            | Additional infomation  | Item ID      | Branch```  
-  ```21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB```  
+  ```21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB```
+
+  Not all the fields are required but there must be five (5) columns in the input or 
+  mailerbot will get confused about what data is in which column. So minimally
+  ```21221012345678||||```
+
 
   The script will automatically search for the user first name and their email. 
   If the email is not found it is reported to the $UNMAILABLE_CUSTOMERS customers file.
@@ -18,11 +28,9 @@ Prepares and mails HTML notices to customers.
   Once the user's information is queried, the terms in double-square brackets 
   are substituted. The following template values can be found in the current version 
   of the html templates for AV Incomplete (AVIncompleteIsComplete.html and AVIncompleteNotice.html)
-
-    ```[[noticeDate]],[[firstName]],[[title]],[[itemId]],[[librDesc]]```  
   
   The data sent from AV Incomplete is as follows.
-    ```21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB```  
+  ```21221012345678|Cats / by Jim Pipe|insert / booklet missing|31221096645630|ABB```  
 
   This script uses seluser API to look up the customer's first name and email.  
   ```noticeDate | firstName  | title            | missing piece           | itemId       | librDesc```  
@@ -31,17 +39,17 @@ Prepares and mails HTML notices to customers.
   Cancelled on-order item html template (OnOrderCancelHoldNotice.html) has fewer html template strings, 
   but are handled with the same logic.
   The data from notify_customers.sh is as follows.   
-    ```21221012345678|<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||```
+  ```21221012345678|<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||```
 
   This scripts needs the following.   
-    ```[[noticeDate]],[[firstName]],[[title]]```
+  ```[[noticeDate]],[[firstName]],[[title]]```
 
   So a lookup is done and the values used to populate the html template text.   
-    ```noticeDate | firstName | title (and search link)```                        
-    ```2022-03-04 | Balzac    |<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||```
+  ```noticeDate | firstName | title (and search link)```                        
+  ```2022-03-04 | Balzac    |<a href="https://epl.biblio...">Cats / by Jim Pipe</a><br/>||```
 
 ### Flags
-<pre>
+```
   -c, --customers={customer.lst}: Required. Text file of customer and item information shown above.
   -d, --debug turn on debug logging. The email content is written to the $LOG 
      file but no email is sent.
@@ -54,7 +62,7 @@ Prepares and mails HTML notices to customers.
   -v, --version: display application version and exit.
   -V, --VARS: Display all set variables.
   -x, --xhelp: display usage message and exit.
-</pre>
+```
 
 ### Mon Feb 24 13:19:28 MST 2014 
 
@@ -181,25 +189,26 @@ formatting errors and is so is removed during processing, and does not appear in
 ```
 
 ### Exclude files 
-are used to exclude customers from the mailing process. Customer IDs or user keys must appear one-per-line, but may 
+Are used to exclude customers from the mailing process. Customer IDs or user keys must appear one-per-line, but may 
 include additional information after the first pipe, it will be ignored.
  ```21221011111111| data_1| data_2| ...| data_n |```
 
 ## Current status 
-Version 0.3
+* mailerbothtml.sh version 1.03.04
+* mailerbot.pl version 0.4_U_03
 
 ## Location 
-```/s/sirsi/Unicorn/Bincustom```
+`/software/EDPL/Unicorn/Bincustom`
 
 
 ### Product Description:
-Perl script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
+Perl and bash script written by Andrew Nisbet for Edmonton Public Library, distributable by the enclosed license.
 
 ### Repository Information:
-This product is under version control using Git.
+This product is under version control using Git, and can be found here: https://github.com/Edmonton-Public-Library/mailerbot
 
 ### Dependencies:
-None
+* seluser - for look ups of customer first name and email address.
 
 ### Known Issues:
 None
