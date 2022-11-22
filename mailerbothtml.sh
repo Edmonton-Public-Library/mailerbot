@@ -23,7 +23,8 @@
 # Dependencies: 
 # Version:
 #   
-#   1.03.01 - Create -l argument log file if it doesn't exist.
+#   1.03.05 - Fixed bug that printed all branch names if returning
+#             branch was MNA.
 #
 #################################################################
 HOST=$(hostname)
@@ -34,7 +35,7 @@ else
     . ~/.bashrc
     WORKING_DIR=/software/EDPL/Unicorn/EPLwork/cronjobscripts/Mailerbot
 fi
-VERSION="1.03.04"
+VERSION="1.03.05"
 APP=$(basename -s .sh $0)
 DEBUG=false
 LOG=$WORKING_DIR/$APP.log
@@ -188,7 +189,7 @@ email_customer()
         firstName=$(echo $customer_id | seluser -iB -o--first_name | awk -F "|" '{print $1}')
         email=$(echo $customer_id | seluser -iB -oX.9007. | awk -F "|" '{print $1}')
         # Lookup branch name from branch code codes.
-        librDesc=$(getpol -tLIBR | grep $branch 2>/dev/null | awk -F "|" '{print $22}')
+        librDesc=$(getpol -tLIBR | pipe.pl -gc2:"$branch" -oc21)
     fi
     # Log if the customer is unmailable.
     if [ -z "$email" ]; then
